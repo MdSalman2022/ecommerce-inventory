@@ -4,6 +4,13 @@ import Dashboard from "../../pages/Dashboard/Dashboard";
 import Customers from "../../pages/Customers/Customers";
 import StartOrder from "../../pages/StartOrder/StartOrder";
 import Products from "../../pages/Products/Products";
+import OrderProcessing from "../../pages/OrderProcessing/OrderProcessing";
+import ImportBulkOrders from "../../pages/OrderProcessing/ImportBulkOrders";
+import AllReadyOrders from "../../pages/AllReadyOrders/AllReadyOrders";
+import CompletedOrders from "../../pages/CompletedOrders/CompletedOrders";
+import ReturnedOrders from "../../pages/ReturnedOrders/ReturnedOrders";
+import CancelledOrders from "../../pages/CancelledOrders/CancelledOrders";
+import LossProfitPage from "../../pages/LossProfitPage/LossProfitPage";
 
 export const router = createBrowserRouter([
   {
@@ -26,6 +33,34 @@ export const router = createBrowserRouter([
       {
         path: "/products",
         element: <Products />,
+      },
+      {
+        path: "/orders-processing",
+        element: <OrderProcessing />,
+      },
+      {
+        path: "/orders-processing/import-csv",
+        element: <ImportBulkOrders />,
+      },
+      {
+        path: "/all-ready-orders",
+        element: <AllReadyOrders />,
+      },
+      {
+        path: "/completed-orders",
+        element: <CompletedOrders />,
+      },
+      {
+        path: "/returned-orders",
+        element: <ReturnedOrders />,
+      },
+      {
+        path: "/cancelled-orders",
+        element: <CancelledOrders />,
+      },
+      {
+        path: "/loss-profit",
+        element: <LossProfitPage />,
       },
     ],
   },
