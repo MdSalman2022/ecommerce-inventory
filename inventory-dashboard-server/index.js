@@ -30,6 +30,9 @@ async function run() {
     const customersCollection = client
       .db("inventory-app")
       .collection("customersCollection");
+    const ordersCollection = client
+      .db("inventory-app")
+      .collection("ordersCollection");
 
     app.get("/api/get-customers", async (req, res) => {
       try {
@@ -171,6 +174,21 @@ async function run() {
       }
     });
 
+    //get orders
+
+    app.get("/api/get-orders", async (req, res) => {
+      try {
+        const orders = await ordersCollection.find().toArray();
+
+        res.send(orders);
+      } catch (error) {
+        console.error("Error retrieving orders:", error);
+        res
+          .status(500)
+          .json({ success: false, message: "Internal Server Error" });
+      }
+    });
+
     // All post api
 
     app.post("/api/add-customer", async (req, res) => {
@@ -252,6 +270,60 @@ async function run() {
         res.json({
           success: true,
           message: "Product added successfully",
+          result,
+        });
+      } catch (error) {
+        console.error(error);
+        res
+          .status(500)
+          .json({ success: false, message: "Internal Server Error" });
+      }
+    });
+
+    // order collection
+    app.post("/api/post-order", async (req, res) => {
+      try {
+        const {
+          image,
+          name,
+          phone,
+          address,
+          district,
+          product,
+          quantity,
+          courier,
+          deliveryCharge,
+          discount,
+          total,
+          advance,
+          cash,
+          instruction,
+        } = req.body;
+
+        const order = {
+          image,
+          name,
+          phone,
+          address,
+          district,
+          product,
+          quantity,
+          courier,
+          deliveryCharge,
+          discount,
+          total,
+          advance,
+          cash,
+          instruction,
+          orderStatus: "processing",
+          timestamp: new Date().toISOString(),
+        };
+
+        const result = await ordersCollection.insertOne(order);
+
+        res.json({
+          success: true,
+          message: "Order added successfully",
           result,
         });
       } catch (error) {
@@ -346,6 +418,82 @@ async function run() {
       }
     });
 
+    app.put("/api/put-edit-order/:id", async (req, res) => {
+      try {
+        const customerId = req.params.id;
+        const {
+          image,
+          name,
+          description,
+          brand,
+          supplier,
+          store,
+          liftPrice,
+          salePrice,
+          availableQty,
+          qty,
+        } = req.body;
+
+        const result = await productsCollection.updateOne(
+          { _id: new ObjectId(customerId) },
+          {
+            $set: {
+              image,
+              name,
+              description,
+              brand,
+              supplier,
+              store,
+              liftPrice,
+              salePrice,
+              availableQty,
+              qty,
+            },
+          }
+        );
+
+        if (result.matchedCount === 1) {
+          res.json({ success: true, message: "Customer updated successfully" });
+        } else {
+          res
+            .status(404)
+            .json({ success: false, message: "Customer not found" });
+        }
+      } catch (error) {
+        console.error("Error updating customer:", error);
+        res
+          .status(500)
+          .json({ success: false, message: "Internal Server Error" });
+      }
+    });
+
+    app.put("/api/put-update-order-status/:id", async (req, res) => {
+      try {
+        const orderId = req.params.id;
+        const { orderStatus } = req.body;
+
+        const result = await ordersCollection.updateOne(
+          { _id: new ObjectId(orderId) },
+          {
+            $set: {
+              orderStatus,
+            },
+          }
+        );
+
+        if (result.matchedCount === 1) {
+          res.json({ success: true, message: "order updated successfully" });
+        } else {
+          res.status(404).json({ success: false, message: "order not found" });
+        }
+      } catch (error) {
+        console.error("Error updating order:", error);
+        res
+          .status(500)
+          .json({ success: false, message: "Internal Server Error" });
+      }
+    });
+
     //All delete api
     app.delete("/api/delete-customer/:id", async (req, res) => {
       try {
@@ -387,6 +535,26 @@ async function run() {
         }
       } catch (error) {
         console.error("Error deleting customer:", error);
+        res
+          .status(500)
+          .json({ success: false, message: "Internal Server Error" });
+      }
+    });
+    app.delete("/api/delete-order/:id", async (req, res) => {
+      try {
+        const productId = req.params.id;
+
+        const result = await ordersCollection.deleteOne({
+          _id: new ObjectId(productId),
+        });
+
+        if (result.deletedCount === 1) {
+          res.json({ success: true, message: "order deleted successfully" });
+        } else {
+          res.status(404).json({ success: false, message: "order not found" });
+        }
+      } catch (error) {
+        console.error("Error deleting order:", error);
         res
           .status(500)
           .json({ success: false, message: "Internal Server Error" });
