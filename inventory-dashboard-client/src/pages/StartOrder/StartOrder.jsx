@@ -6,6 +6,7 @@ import { toast } from "react-hot-toast";
 import EditCustomerModal from "../../components/Main/Customers/EditCustomerModal";
 import avatarIcon from "../../assets/shared/avatar.png";
 import DeleteCustomerModal from "../../components/Main/Customers/DeleteCustomerModal";
+import StartOrderModal from "../../components/Main/StartOrder/StartOrderModal";
 
 const StartOrder = () => {
   const [searchResults, setSearchResults] = useState([]);
@@ -17,7 +18,7 @@ const StartOrder = () => {
 
     console.log(customerSearchKey);
 
-    let url = `http://localhost:5000/api/search-customer?`;
+    let url = `${import.meta.env.VITE_SERVER_URL}/api/search-customer?`;
 
     if (customerSearchKey.match(/^\d+$/)) {
       url += `phonenumber=${customerSearchKey}`;
@@ -55,6 +56,8 @@ const StartOrder = () => {
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
+  const [isStartNewOrderOpen, setIsStartNewOrderOpen] = useState(false);
+
   return (
     <div className="flex flex-col gap-3">
       <EditCustomerModal
@@ -66,6 +69,10 @@ const StartOrder = () => {
         setIsDeleteModalOpen={setIsDeleteModalOpen}
         isDeleteModalOpen={isDeleteModalOpen}
         selectedCustomer={selectedCustomer}
+      />
+      <StartOrderModal
+        isStartNewOrderOpen={isStartNewOrderOpen}
+        setIsStartNewOrderOpen={setIsStartNewOrderOpen}
       />
       <p className="font-medium">Start Order</p>
       <hr />
@@ -83,7 +90,12 @@ const StartOrder = () => {
       </form>
       <div className="flex gap-2 items-center">
         আপনি যে কাস্টমার খুঁজছেন তিনি তালিকায় আছে কি না দেখুন। না থাকলে এখানে
-        <p className="p-2 btn btn-info">Start New Order</p>
+        <button
+          onClick={() => setIsStartNewOrderOpen(true)}
+          className="p-2 btn btn-info"
+        >
+          Start New Order
+        </button>
         ক্লিক করুন।
       </div>
 

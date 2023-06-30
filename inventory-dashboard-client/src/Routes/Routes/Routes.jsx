@@ -11,6 +11,7 @@ import CompletedOrders from "../../pages/CompletedOrders/CompletedOrders";
 import ReturnedOrders from "../../pages/ReturnedOrders/ReturnedOrders";
 import CancelledOrders from "../../pages/CancelledOrders/CancelledOrders";
 import LossProfitPage from "../../pages/LossProfitPage/LossProfitPage";
+import Transaction from "../../pages/Transaction/Transaction";
 
 export const router = createBrowserRouter([
   {
@@ -61,6 +62,10 @@ export const router = createBrowserRouter([
       {
         path: "/loss-profit",
         element: <LossProfitPage />,
+      },
+      {
+        path: "/transactions",
+        element: <Transaction />,
       },
     ],
   },

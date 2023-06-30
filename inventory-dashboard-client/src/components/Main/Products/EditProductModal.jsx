@@ -6,7 +6,7 @@ const EditProductModal = ({
   setIsEditModalOpen,
   isEditModalOpen,
   selectedProduct,
-  refetch,
+  refetchProducts,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -98,7 +98,7 @@ const EditProductModal = ({
         console.log(result);
         if (result.success) {
           toast.success(`${customer.name} is updated successfully`);
-          refetch();
+          refetchProducts();
           setIsModalOpen(false);
           setIsEditModalOpen(false);
         } else {

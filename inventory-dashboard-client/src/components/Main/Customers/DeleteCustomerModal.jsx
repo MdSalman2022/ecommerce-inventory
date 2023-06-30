@@ -22,7 +22,7 @@ const DeleteCustomerModal = ({
   }, [isModalOpen]);
 
   const handleDeleteCustomer = (id) => {
-    fetch(`http://localhost:5000/api/delete-customer/${id}`, {
+    fetch(`${import.meta.env.VITE_SERVER_URL}/api/delete-customer/${id}`, {
       method: "DELETE",
     })
       .then((res) => res.json())

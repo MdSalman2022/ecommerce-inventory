@@ -8,47 +8,49 @@ import avatarIcon from "../../assets/shared/avatar.png";
 import DeleteCustomerModal from "../../components/Main/Customers/DeleteCustomerModal";
 import { useQuery } from "react-query";
 import { Link } from "react-router-dom";
+import { RiArrowGoBackLine } from "react-icons/ri";
+
+import { FaCheck } from "react-icons/fa";
+import { TbFileInvoice } from "react-icons/tb";
+import InvoiceGenerator from "../../components/Main/shared/InvoiceGenerator/InvoiceGenerator";
 
 const CompletedOrders = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState({});
+  const [selectedOrder, setSelectedOrder] = useState({});
 
   console.log(isEditModalOpen);
-  console.log(selectedCustomer);
+  console.log(selectedOrder);
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const {
-    data: customers,
+    data: orders,
     isLoading,
     isError,
     error,
     refetch,
-  } = useQuery(
-    "customers",
-    async () => {
-      const response = await fetch(
-        `${import.meta.env.VITE_SERVER_URL}/api/get-customers`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch customers");
+  } = useQuery("orders", async () => {
+    const response = await fetch(
+      `${import.meta.env.VITE_SERVER_URL}/api/get-orders`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
-      return response.json();
-    },
-    {
-      cacheTime: 30 * 60 * 1000, // Cache data for 30 minutes
-      staleTime: 10 * 60 * 1000, // Consider data fresh for 10 minutes
+    );
+    if (!response.ok) {
+      throw new Error("Failed to fetch customers");
     }
-  );
+    return response
+      .json()
+      .then((data) =>
+        data.filter((order) => order.orderStatus === "completed")
+      );
+  });
 
-  console.log(customers);
+  console.log(orders);
 
   const handleExportClick = () => {
     fetch(`${import.meta.env.VITE_SERVER_URL}/api/customer-export`, {
@@ -85,22 +87,35 @@ const CompletedOrders = () => {
       });
   };
 
-  // console.log(isModalOpen);
+  const handleOrderStatus = (id, status) => {
+    fetch(
+      `${import.meta.env.VITE_SERVER_URL}/api/put-update-order-status/${id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          orderStatus: status,
+        }),
+      }
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data);
+        refetch();
+        toast.success("Order status updated successfully");
+      })
+      .catch((err) => {
+        console.log(err);
+        toast.error("Failed to update order status");
+      });
+  };
+
+  console.log(isModalOpen);
 
   return (
     <div className="space-y-4">
-      <EditCustomerModal
-        setIsEditModalOpen={setIsEditModalOpen}
-        isEditModalOpen={isEditModalOpen}
-        selectedCustomer={selectedCustomer}
-        refetch={refetch}
-      />
-      <DeleteCustomerModal
-        setIsDeleteModalOpen={setIsDeleteModalOpen}
-        isDeleteModalOpen={isDeleteModalOpen}
-        selectedCustomer={selectedCustomer}
-        refetch={refetch}
-      />
       <div className="flex justify-between items-start py-3 border-b">
         <div>
           <p className="text-xl font-semibold">Completed Orders</p>
@@ -159,95 +174,83 @@ const CompletedOrders = () => {
               </tr>
             </thead>
             <tbody className="bg-white">
-              {customers?.map((customer, index) => (
+              {orders?.map((order, index) => (
                 <tr key={index}>
                   <td>{index + 1}</td>
+                  <td>
+                    {" "}
+                    <span
+                      onClick={() => setIsModalOpen(!isModalOpen)}
+                      className="p-1 text-2xl text-success"
+                    >
+                      <ModalBox
+                        isModalOpen={isModalOpen}
+                        setIsModalOpen={setIsEditModalOpen}
+                      >
+                        <InvoiceGenerator item={order} />
+                      </ModalBox>
+                      <TbFileInvoice />
+                    </span>
+                  </td>
                   <td className="flex flex-col gap-1">
                     <div className="flex items-center space-x-3">
                       <div className="avatar">
                         <div className="mask mask-squircle w-12 h-12">
                           <img
-                            src={customer.customer_details.image || avatarIcon}
+                            src={order?.image || avatarIcon}
                             alt="image"
                             className="rounded-full border-2 border-primary p-1"
                           />
                         </div>
                       </div>
                       <div>
-                        <div className="font-bold">
-                          {customer.customer_details.name}
-                        </div>
+                        <div className="font-bold">{order.name}</div>
                         <div className="text-sm opacity-50">
-                          {customer.customer_details.location}
-                        </div>
-                        <div className="text-sm opacity-50">
-                          {customer.customer_details.address}
+                          {order.address}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="p-1 border border-gray-500 rounded-full text-2xl text-success">
-                        <AiOutlineShoppingCart />
+                      <span
+                        onClick={() => setIsModalOpen(!isModalOpen)}
+                        className="p-1 text-2xl text-success"
+                      >
+                        <ModalBox
+                          isModalOpen={isModalOpen}
+                          setIsModalOpen={setIsEditModalOpen}
+                        >
+                          <InvoiceGenerator item={order} />
+                        </ModalBox>
+                        <TbFileInvoice />
                       </span>
                       <span
                         onClick={() => {
-                          setIsEditModalOpen(true);
-                          setSelectedCustomer(customer);
+                          handleOrderStatus(order._id, "returned");
                         }}
-                        className="p-1 border border-gray-500 rounded-full text-2xl text-info"
+                        className="tooltip p-1 border border-gray-500 rounded-full text-2xl text-error"
+                        data-tip="Order Return"
                       >
-                        <AiOutlineEdit />
-                      </span>
-                      <span
-                        onClick={() => {
-                          setIsDeleteModalOpen(true);
-                          setSelectedCustomer(customer);
-                        }}
-                        className="p-1 border border-gray-500 rounded-full text-2xl text-error"
-                      >
-                        <RiDeleteBin6Line />
+                        <RiArrowGoBackLine className="text-lg" />
                       </span>
                     </div>
                   </td>
                   <td>
-                    <div>Total: {customer.purchase.total}</div>
-                    {customer.purchase.last_purchase ? (
-                      <div>
-                        Last purchase: {customer.purchase.last_purchase}
-                      </div>
-                    ) : (
-                      <></>
-                    )}
+                    <img
+                      className="w-10 h-10 rounded-full object-cover"
+                      src={order.product.image}
+                      alt=""
+                    />
                   </td>
                   <td>
-                    <div>Total: {customer.purchase.total}</div>
-                    {customer.purchase.last_purchase ? (
-                      <div>
-                        Last purchase: {customer.purchase.last_purchase}
-                      </div>
-                    ) : (
-                      <></>
-                    )}
-                  </td>
-                  <td>
-                    <div>
-                      <p>Processing: {customer.orders.processing}</p>
-                      {customer.orders.ready ? (
-                        <p>Ready: {customer.orders.ready}</p>
-                      ) : (
-                        <p>Ready: 0</p>
-                      )}
-
-                      {customer.orders.completed ? (
-                        <p>Completed: {customer.orders.completed}</p>
-                      ) : (
-                        <p>Completed: 0</p>
-                      )}
-                      {customer.orders.returned ? (
-                        <p>Returned: {customer.orders.returned}</p>
-                      ) : (
-                        <p>Returned: 0</p>
-                      )}
+                    <div className="flex flex-col">
+                      <p className="badge badge-info">
+                        {order?.courier}: {order?.deliveryCharge}
+                      </p>
+                      <p className="">Price: {order?.product?.salePrice}</p>
+                      <p>Quantity: {order?.quantity}</p>
+                      <p className="">Total Bill: {order?.total}</p>
+                      <p className="">Advance: {order?.advance}</p>
+                      <p className="">COD: {order?.total - order?.advance}</p>
                     </div>
                   </td>
                 </tr>

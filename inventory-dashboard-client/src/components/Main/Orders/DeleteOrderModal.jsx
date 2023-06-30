@@ -3,13 +3,15 @@ import ModalBox from "../shared/Modals/ModalBox";
 import { toast } from "react-hot-toast";
 import avatarIcon from "../../../assets/shared/avatar.png";
 
-const DeleteProductModal = ({
+const DeleteOrderModal = ({
   setIsDeleteModalOpen,
   isDeleteModalOpen,
-  selectedProduct,
+  selectedOrder,
   refetch,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  console.log(selectedOrder);
 
   useEffect(() => {
     setIsModalOpen(isDeleteModalOpen);
@@ -21,16 +23,20 @@ const DeleteProductModal = ({
     }
   }, [isModalOpen]);
 
-  const handleDeleteProduct = (id) => {
-    fetch(`${import.meta.env.VITE_SERVER_URL}/api/delete-product/${id}`, {
+  const handleDeleteCustomer = (id) => {
+    fetch(`${import.meta.env.VITE_SERVER_URL}/api/delete-order/${id}`, {
       method: "DELETE",
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log(data);
-        toast.success("Customer deleted successfully");
-        refetch();
-        setIsModalOpen(false);
+        if (data.success) {
+          console.log(data);
+          toast.success("Customer deleted successfully");
+          refetch();
+          setIsModalOpen(false);
+        } else {
+          toast.error("Something went wrong");
+        }
       })
       .catch((err) => {
         console.log(err);
@@ -43,7 +49,7 @@ const DeleteProductModal = ({
         <ModalBox isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen}>
           <div className="bg-base-100">
             <p className="text-xl font-semibold p-3 shadow w-full">
-              Delete Product
+              Delete Customer
             </p>
             <div className="w-full bg-white p-5 flex flex-col gap-10">
               <p className="text-2xl">
@@ -52,15 +58,15 @@ const DeleteProductModal = ({
               <div className="flex justify-center gap-5">
                 <img
                   className="w-10 h-10"
-                  src={selectedProduct?.image || avatarIcon}
+                  src={selectedOrder?.image || avatarIcon}
                   alt=""
                 />
-                <p className="text-2xl">{selectedProduct?.name}</p>
+                <p className="text-2xl">{selectedOrder?.name}</p>
               </div>
               <div className="flex justify-between">
                 <button className="btn btn-error btn-outline">Cancel</button>
                 <button
-                  onClick={() => handleDeleteProduct(selectedProduct?._id)}
+                  onClick={() => handleDeleteCustomer(selectedOrder?._id)}
                   className="btn btn-error"
                 >
                   Delete
@@ -74,4 +80,4 @@ const DeleteProductModal = ({
   );
 };
 
-export default DeleteProductModal;
+export default DeleteOrderModal;

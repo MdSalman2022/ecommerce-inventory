@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { AiOutlineEdit, AiOutlineShoppingCart } from "react-icons/ai";
 import { useQuery } from "react-query";
 import avatarIcon from "../../assets/shared/avatar.png";
@@ -7,8 +7,12 @@ import ModalBox from "../../components/Main/shared/Modals/ModalBox";
 import { toast } from "react-hot-toast";
 import DeleteProductModal from "../../components/Main/Products/DeleteProductModal";
 import EditProductModal from "../../components/Main/Products/EditProductModal";
+import { StateContext } from "../../contexts/StateProvider/StateProvider";
 
 const Products = () => {
+  const { products, refetchProducts, productsIsLoading } =
+    useContext(StateContext);
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState({});
 
@@ -18,34 +22,6 @@ const Products = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const {
-    data: products,
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useQuery(
-    "products",
-    async () => {
-      const response = await fetch(
-        `${import.meta.env.VITE_SERVER_URL}/api/get-products`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch customers");
-      }
-      return response.json();
-    },
-    {
-      cacheTime: 30 * 60 * 1000, // Cache data for 30 minutes
-      staleTime: 10 * 60 * 1000, // Consider data fresh for 10 minutes
-    }
-  );
   const handleExportClick = () => {
     fetch(`${import.meta.env.VITE_SERVER_URL}/api/product-export`, {
       method: "GET",
@@ -161,7 +137,7 @@ const Products = () => {
         console.log(result);
         if (result.success) {
           toast.success(`${product.name} is added successfully`);
-          refetch();
+          refetchProducts();
           setIsModalOpen(false);
         } else {
           toast.error("Something went wrong");
@@ -215,13 +191,13 @@ const Products = () => {
         setIsEditModalOpen={setIsEditModalOpen}
         isEditModalOpen={isEditModalOpen}
         selectedProduct={selectedProduct}
-        refetch={refetch}
+        refetchProducts={refetchProducts}
       />
       <DeleteProductModal
         setIsDeleteModalOpen={setIsDeleteModalOpen}
         isDeleteModalOpen={isDeleteModalOpen}
         selectedProduct={selectedProduct}
-        refetch={refetch}
+        refetchProducts={refetchProducts}
       />
       <div className="grid grid-cols-3 gap-5">
         <div className="p-2 border bg-white rounded-lg">

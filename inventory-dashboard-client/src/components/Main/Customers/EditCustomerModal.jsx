@@ -54,7 +54,7 @@ const EditCustomerModal = ({
         });
     } else {
       const customer = {
-        image: selectedCustomer?.customer_details?.image,
+        image: selectedCustomer?.image,
         name,
         phone,
         district,
@@ -69,7 +69,7 @@ const EditCustomerModal = ({
 
   const updateCustomer = (customer) => {
     fetch(
-      `${import.meta.env.VITE_SERVER_URL}/api/put-edit-customer/${
+      `${import.meta.env.VITE_SERVER_URL}/api/put-edit-order/${
         selectedCustomer?._id
       }`,
       {

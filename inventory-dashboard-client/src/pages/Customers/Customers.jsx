@@ -166,6 +166,45 @@ const Customers = () => {
       });
   };
 
+  const [searchResults, setSearchResults] = useState("");
+
+  const handleSearch = (e) => {
+    e.preventDefault(); // prevent page refresh on form submit
+    const form = e.target;
+    const customerSearchKey = form["search-key"].value;
+
+    console.log(customerSearchKey);
+
+    let url = `${import.meta.env.VITE_SERVER_URL}/api/search-customer?`;
+
+    if (customerSearchKey.match(/^\d+$/)) {
+      url += `phonenumber=${customerSearchKey}`;
+      console.log(url);
+    } else {
+      url += `name=${customerSearchKey}`;
+      console.log(url);
+    }
+
+    fetch(url)
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data);
+        if (data.success) {
+          toast.success("Customer Found!!");
+          setSearchResults(data.customers);
+        } else {
+          toast.error("Customer Not Found!!");
+          setSearchResults([]);
+        }
+      })
+      .catch((error) => {
+        console.error("Error searching for customers:", error);
+        setSearchResults([]);
+      });
+  };
+
+  console.log(searchResults);
+
   return (
     <div className="space-y-4">
       <EditCustomerModal
@@ -293,7 +332,13 @@ const Customers = () => {
         </div>
         <div className="flex items-center gap-2">
           <p>Search</p>
-          <input type="text" className="input input-bordered" />
+          <form onSubmit={handleSearch}>
+            <input
+              name="search-key"
+              type="text"
+              className="input input-bordered"
+            />
+          </form>
         </div>
       </div>
 
@@ -309,88 +354,175 @@ const Customers = () => {
               </tr>
             </thead>
             <tbody className="bg-white">
-              {customers?.map((customer, index) => (
-                <tr key={index}>
-                  <td className="flex flex-col gap-1">
-                    <div className="flex items-center space-x-3">
-                      <div className="avatar">
-                        <div className="mask mask-squircle w-12 h-12">
-                          <img
-                            src={customer.customer_details.image || avatarIcon}
-                            alt="image"
-                            className="rounded-full border-2 border-primary p-1"
-                          />
+              {!searchResults
+                ? customers?.map((customer, index) => (
+                    <tr key={index}>
+                      <td className="flex flex-col gap-1">
+                        <div className="flex items-center space-x-3">
+                          <div className="avatar">
+                            <div className="mask mask-squircle w-12 h-12">
+                              <img
+                                src={
+                                  customer.customer_details.image || avatarIcon
+                                }
+                                alt="image"
+                                className="rounded-full border-2 border-primary p-1"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="font-bold">
+                              {customer.customer_details.name}
+                            </div>
+                            <div className="text-sm opacity-50">
+                              {customer.customer_details.location}
+                            </div>
+                            <div className="text-sm opacity-50">
+                              {customer.customer_details.address}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      <div>
-                        <div className="font-bold">
-                          {customer.customer_details.name}
+                        <div className="flex items-center gap-2">
+                          <span className="p-1 border border-gray-500 rounded-full text-2xl text-success">
+                            <AiOutlineShoppingCart />
+                          </span>
+                          <span
+                            onClick={() => {
+                              setIsEditModalOpen(true);
+                              setSelectedCustomer(customer);
+                            }}
+                            className="p-1 border border-gray-500 rounded-full text-2xl text-info"
+                          >
+                            <AiOutlineEdit />
+                          </span>
+                          <span
+                            onClick={() => {
+                              setIsDeleteModalOpen(true);
+                              setSelectedCustomer(customer);
+                            }}
+                            className="p-1 border border-gray-500 rounded-full text-2xl text-error"
+                          >
+                            <RiDeleteBin6Line />
+                          </span>
                         </div>
-                        <div className="text-sm opacity-50">
-                          {customer.customer_details.location}
-                        </div>
-                        <div className="text-sm opacity-50">
-                          {customer.customer_details.address}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="p-1 border border-gray-500 rounded-full text-2xl text-success">
-                        <AiOutlineShoppingCart />
-                      </span>
-                      <span
-                        onClick={() => {
-                          setIsEditModalOpen(true);
-                          setSelectedCustomer(customer);
-                        }}
-                        className="p-1 border border-gray-500 rounded-full text-2xl text-info"
-                      >
-                        <AiOutlineEdit />
-                      </span>
-                      <span
-                        onClick={() => {
-                          setIsDeleteModalOpen(true);
-                          setSelectedCustomer(customer);
-                        }}
-                        className="p-1 border border-gray-500 rounded-full text-2xl text-error"
-                      >
-                        <RiDeleteBin6Line />
-                      </span>
-                    </div>
-                  </td>
-                  <td>
-                    <div>Total: {customer.purchase.total}</div>
-                    {customer.purchase.last_purchase ? (
-                      <div>
-                        Last purchase: {customer.purchase.last_purchase}
-                      </div>
-                    ) : (
-                      <></>
-                    )}
-                  </td>
-                  <td>
-                    <div>
-                      <p>Processing: {customer.orders.processing}</p>
-                      {customer.orders.ready ? (
-                        <p>Ready: {customer.orders.ready}</p>
-                      ) : (
-                        <p>Ready: 0</p>
-                      )}
+                      </td>
+                      <td>
+                        <div>Total: {customer.purchase.total}</div>
+                        {customer.purchase.last_purchase ? (
+                          <div>
+                            Last purchase: {customer.purchase.last_purchase}
+                          </div>
+                        ) : (
+                          <></>
+                        )}
+                      </td>
+                      <td>
+                        <div>
+                          <p>Processing: {customer.orders.processing}</p>
+                          {customer.orders.ready ? (
+                            <p>Ready: {customer.orders.ready}</p>
+                          ) : (
+                            <p>Ready: 0</p>
+                          )}
 
-                      {customer.orders.completed ? (
-                        <p>Completed: {customer.orders.completed}</p>
-                      ) : (
-                        <p>Completed: 0</p>
-                      )}
-                      {customer.orders.returned ? (
-                        <p>Returned: {customer.orders.returned}</p>
-                      ) : (
-                        <p>Returned: 0</p>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                          {customer.orders.completed ? (
+                            <p>Completed: {customer.orders.completed}</p>
+                          ) : (
+                            <p>Completed: 0</p>
+                          )}
+                          {customer.orders.returned ? (
+                            <p>Returned: {customer.orders.returned}</p>
+                          ) : (
+                            <p>Returned: 0</p>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                : searchResults.map((customer, index) => (
+                    <tr key={index}>
+                      <td className="flex flex-col gap-1">
+                        <div className="flex items-center space-x-3">
+                          <div className="avatar">
+                            <div className="mask mask-squircle w-12 h-12">
+                              <img
+                                src={
+                                  customer.customer_details.image || avatarIcon
+                                }
+                                alt="image"
+                                className="rounded-full border-2 border-primary p-1"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="font-bold">
+                              {customer.customer_details.name}
+                            </div>
+                            <div className="text-sm opacity-50">
+                              {customer.customer_details.location}
+                            </div>
+                            <div className="text-sm opacity-50">
+                              {customer.customer_details.address}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="p-1 border border-gray-500 rounded-full text-2xl text-success">
+                            <AiOutlineShoppingCart />
+                          </span>
+                          <span
+                            onClick={() => {
+                              setIsEditModalOpen(true);
+                              setSelectedCustomer(customer);
+                            }}
+                            className="p-1 border border-gray-500 rounded-full text-2xl text-info"
+                          >
+                            <AiOutlineEdit />
+                          </span>
+                          <span
+                            onClick={() => {
+                              setIsDeleteModalOpen(true);
+                              setSelectedCustomer(customer);
+                            }}
+                            className="p-1 border border-gray-500 rounded-full text-2xl text-error"
+                          >
+                            <RiDeleteBin6Line />
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <div>Total: {customer.purchase.total}</div>
+                        {customer.purchase.last_purchase ? (
+                          <div>
+                            Last purchase: {customer.purchase.last_purchase}
+                          </div>
+                        ) : (
+                          <></>
+                        )}
+                      </td>
+                      <td>
+                        <div>
+                          <p>Processing: {customer.orders.processing}</p>
+                          {customer.orders.ready ? (
+                            <p>Ready: {customer.orders.ready}</p>
+                          ) : (
+                            <p>Ready: 0</p>
+                          )}
+
+                          {customer.orders.completed ? (
+                            <p>Completed: {customer.orders.completed}</p>
+                          ) : (
+                            <p>Completed: 0</p>
+                          )}
+                          {customer.orders.returned ? (
+                            <p>Returned: {customer.orders.returned}</p>
+                          ) : (
+                            <p>Returned: 0</p>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
             </tbody>
             <tfoot className="bg-white">
               <tr>
