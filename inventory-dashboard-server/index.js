@@ -5,7 +5,12 @@ const { Parser } = require("json2csv");
 
 const app = express();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const short = require("short-uuid");
 require("dotenv").config();
+const multer = require("multer");
+const fs = require("fs");
+const csv = require("csv-parser");
+const upload = multer({ dest: "uploads/" });
 const port = process.env.PORT || 5000;
 
 app.use(express.json());
@@ -33,6 +38,16 @@ async function run() {
     const ordersCollection = client
       .db("inventory-app")
       .collection("ordersCollection");
+
+    ordersCollection.createIndex({ orderId: 1 }, (err, result) => {
+      if (err) {
+        console.error("Failed to create index:", err);
+        return;
+      }
+
+      console.log("Index created successfully");
+      // You can start performing searches on the "orderId" field now
+    });
 
     app.get("/api/get-customers", async (req, res) => {
       try {
@@ -93,22 +108,85 @@ async function run() {
         res.status(500).send("Internal Server Error");
       }
     });
+
     app.get("/api/product-export", async (req, res) => {
+      function formatStockDate(isoTimestamp) {
+        const date = new Date(isoTimestamp);
+        const formattedDate = date.toLocaleDateString("en-US", {
+          day: "numeric",
+          month: "short",
+          year: "2-digit",
+        });
+
+        return formattedDate;
+      }
       try {
         const data = await productsCollection.find().toArray();
         const flattenedData = data.map((item) => ({
           _id: item._id,
+          orderId: item.orderId,
           image: item.image,
           name: item.name,
-          description: item.description,
-          brand: item.brand,
-          supplier: item.supplier,
-          store: item.store,
-          liftPrice: item.liftPrice,
-          salePrice: item.salePrice,
-          availableQty: item.availableQty,
-          qty: item.qty,
-          stockDate: item.stockDate,
+          phone: item.phone,
+          address: item.address,
+          district: item.district,
+          products: item.products,
+          quantity: item.quantity,
+          courier: item.courier,
+          deliveryCharge: item.deliveryCharge,
+          timestamp: formatStockDate(item.timestamp),
+        }));
+        const filename = "customer_list.csv";
+
+        const json2csvParser = new Parser();
+        const csvData = json2csvParser.parse(flattenedData);
+
+        res.setHeader("Content-Type", "text/csv");
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="${filename}"`
+        );
+
+        res.send(csvData);
+      } catch (error) {
+        console.error("Error exporting data:", error);
+        res.status(500).send("Internal Server Error");
+      }
+    });
+
+    app.get("/api/order-export", async (req, res) => {
+      function formatStockDate(isoTimestamp) {
+        const date = new Date(isoTimestamp);
+        const formattedDate = date.toLocaleDateString("en-US", {
+          day: "numeric",
+          month: "short",
+          year: "2-digit",
+        });
+
+        return formattedDate;
+      }
+
+      try {
+        const data = await ordersCollection.find().toArray();
+        const flattenedData = data.map((item) => ({
+          _id: item._id,
+          orderId: item.orderId,
+          image: item.image,
+          name: item.name,
+          phone: item.phone,
+          address: item.address,
+          district: item.district,
+          products: item.products,
+          quantity: item.quantity,
+          courier: item.courier,
+          deliveryCharge: item.deliveryCharge,
+          discount: item.discount,
+          total: item.total,
+          advance: item.advance,
+          cash: item.cash,
+          instruction: item.instruction,
+          orderStatus: "processing",
+          timestamp: formatStockDate(item.timestamp),
         }));
         const filename = "customer_list.csv";
 
@@ -173,16 +251,83 @@ async function run() {
           .json({ success: false, message: "Internal Server Error" });
       }
     });
+    app.get("/api/search-product", async (req, res) => {
+      try {
+        const { name } = req.query;
+        let searchQuery;
+
+        searchQuery = {
+          name: { $regex: name, $options: "i" },
+        };
+
+        const pipeline = [
+          {
+            $match: searchQuery,
+          },
+          {
+            $limit: 50, // Limit the number of search results
+          },
+        ];
+
+        const customers = await productsCollection
+          .aggregate(pipeline)
+          .toArray();
+
+        if (customers.length > 0) {
+          res.json({ success: true, customers });
+        } else {
+          res.json({ success: false, message: "No customers found" });
+        }
+      } catch (error) {
+        console.error("Error searching for customers:", error);
+        res
+          .status(500)
+          .json({ success: false, message: "Internal Server Error" });
+      }
+    });
 
     //get orders
 
-    app.get("/api/get-orders", async (req, res) => {
-      try {
-        const orders = await ordersCollection.find().toArray();
+    app.get("/api/get-orders/:filterBy", async (req, res) => {
+      const { filterBy } = req.params;
 
-        res.send(orders);
+      console.log(filterBy);
+      let searchQuery = {}; // Default search query for all orders
+
+      if (filterBy === "processing") {
+        searchQuery = { orderStatus: "processing" };
+      } else if (filterBy === "ready") {
+        searchQuery = { orderStatus: "ready" };
+      } else if (filterBy === "completed") {
+        searchQuery = { orderStatus: "completed" };
+      } else if (filterBy === "returned") {
+        searchQuery = { orderStatus: "returned" };
+      } else if (filterBy === "cancelled") {
+        searchQuery = { orderStatus: "cancelled" };
+      }
+
+      const pipeline = [];
+
+      if (Object.keys(searchQuery).length > 0) {
+        pipeline.push({
+          $match: searchQuery,
+        });
+      }
+
+      pipeline.push({
+        $limit: 50, // Limit the number of search results
+      });
+
+      try {
+        const orders = await ordersCollection.aggregate(pipeline).toArray();
+
+        if (orders.length > 0) {
+          res.json({ success: true, orders });
+        } else {
+          res.json({ success: false, message: "No orders found" });
+        }
       } catch (error) {
-        console.error("Error retrieving orders:", error);
+        console.error(error);
         res
           .status(500)
           .json({ success: false, message: "Internal Server Error" });
@@ -282,6 +427,11 @@ async function run() {
 
     // order collection
     app.post("/api/post-order", async (req, res) => {
+      function generateOrderId() {
+        const translator = short();
+        return translator.new().slice(0, 10);
+      }
+
       try {
         const {
           image,
@@ -289,7 +439,7 @@ async function run() {
           phone,
           address,
           district,
-          product,
+          products,
           quantity,
           courier,
           deliveryCharge,
@@ -301,12 +451,13 @@ async function run() {
         } = req.body;
 
         const order = {
+          orderId: generateOrderId(),
           image,
           name,
           phone,
           address,
           district,
-          product,
+          products,
           quantity,
           courier,
           deliveryCharge,
@@ -325,6 +476,91 @@ async function run() {
           success: true,
           message: "Order added successfully",
           result,
+        });
+      } catch (error) {
+        console.error(error);
+        res
+          .status(500)
+          .json({ success: false, message: "Internal Server Error" });
+      }
+    });
+
+    app.post("/api/post-orders", upload.single("file"), async (req, res) => {
+      function generateOrderId() {
+        const translator = short();
+        return translator.new().slice(0, 10);
+      }
+
+      try {
+        const csvFilePath = req.file.path; // Path to the uploaded CSV file
+        const orders = [];
+
+        console.log(csvFilePath);
+        const convertCSVtoJSON = async (csvFilePath) => {
+          return new Promise((resolve, reject) => {
+            fs.createReadStream(csvFilePath)
+              .pipe(csv())
+              .on("data", (data) => {
+                console.log(data);
+                const products = JSON.parse(data.products);
+                console.log(products);
+                const order = {
+                  orderId: generateOrderId(),
+                  image: data?.image,
+                  name: data.name,
+                  phone: data.phone,
+                  address: data.address,
+                  district: data.district,
+                  products: products,
+                  quantity: data.quantity,
+                  courier: data.courier,
+                  deliveryCharge: data.deliveryCharge,
+                  discount: data.discount,
+                  total: data.total,
+                  advance: data.advance,
+                  cash: data.cash,
+                  instruction: data.instruction,
+                  orderStatus: data.orderStatus,
+                  timestamp: new Date().toISOString(),
+                };
+                orders.push(order);
+              })
+              .on("end", () => {
+                resolve(orders);
+              })
+              .on("error", (error) => {
+                reject(error);
+              });
+          });
+        };
+
+        console.log(orders);
+
+        // Function to connect to MongoDB and insert the orders
+        const insertOrdersToMongoDB = async (orders) => {
+          try {
+            const result = await ordersCollection.insertMany(orders);
+            console.log("Orders inserted:", result.insertedCount);
+            // Optionally, you can remove the uploaded CSV file after processing
+            fs.unlinkSync(csvFilePath);
+          } catch (error) {
+            console.error("Error inserting orders:", error);
+          }
+        };
+
+        // Usage example
+        convertCSVtoJSON(csvFilePath)
+          .then((orders) => {
+            insertOrdersToMongoDB(orders);
+          })
+          .catch((error) => {
+            console.error("Error converting CSV to JSON:", error);
+          });
+
+        res.json({
+          success: true,
+          message: "Order added successfully",
+          result: orders,
         });
       } catch (error) {
         console.error(error);
@@ -488,6 +724,34 @@ async function run() {
         }
       } catch (error) {
         console.error("Error updating order:", error);
+        res
+          .status(500)
+          .json({ success: false, message: "Internal Server Error" });
+      }
+    });
+
+    //update available Stock for multiple products
+
+    app.put("/api/put-update-available-stock", async (req, res) => {
+      try {
+        const { allProducts } = req.body;
+
+        console.log(allProducts);
+
+        allProducts.forEach(async (product) => {
+          const result = await productsCollection.updateOne(
+            { _id: new ObjectId(product._id) },
+            {
+              $set: {
+                availableQty: product.availableQty - product.quantity,
+              },
+            }
+          );
+        });
+
+        res.json({ success: true, message: "Stock updated successfully" });
+      } catch (error) {
+        console.error("Error updating stock:", error);
         res
           .status(500)
           .json({ success: false, message: "Internal Server Error" });
