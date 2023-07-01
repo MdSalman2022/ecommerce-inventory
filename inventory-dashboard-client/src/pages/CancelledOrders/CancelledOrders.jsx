@@ -8,6 +8,8 @@ import avatarIcon from "../../assets/shared/avatar.png";
 import DeleteCustomerModal from "../../components/Main/Customers/DeleteCustomerModal";
 import { useQuery } from "react-query";
 import { Link } from "react-router-dom";
+import { TbFileInvoice } from "react-icons/tb";
+import InvoiceGenerator from "../../components/Main/shared/InvoiceGenerator/InvoiceGenerator";
 
 const CancelledOrders = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -20,35 +22,28 @@ const CancelledOrders = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const {
-    data: customers,
+    data: orders,
     isLoading,
     isError,
     error,
     refetch,
-  } = useQuery(
-    "customers",
-    async () => {
-      const response = await fetch(
-        `${import.meta.env.VITE_SERVER_URL}/api/get-customers`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch customers");
+  } = useQuery("orders", async () => {
+    const response = await fetch(
+      `${import.meta.env.VITE_SERVER_URL}/api/get-orders/cancelled`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
-      return response.json();
-    },
-    {
-      cacheTime: 30 * 60 * 1000, // Cache data for 30 minutes
-      staleTime: 10 * 60 * 1000, // Consider data fresh for 10 minutes
+    );
+    if (!response.ok) {
+      throw new Error("Failed to fetch customers");
     }
-  );
+    return response.json().then((data) => data.orders);
+  });
 
-  console.log(customers);
+  console.log(orders);
 
   const handleExportClick = () => {
     fetch(`${import.meta.env.VITE_SERVER_URL}/api/customer-export`, {
@@ -89,19 +84,13 @@ const CancelledOrders = () => {
 
   return (
     <div className="space-y-4">
-      <EditCustomerModal
-        setIsEditModalOpen={setIsEditModalOpen}
-        isEditModalOpen={isEditModalOpen}
-        selectedCustomer={selectedCustomer}
-        refetch={refetch}
-      />
       <DeleteCustomerModal
         setIsDeleteModalOpen={setIsDeleteModalOpen}
         isDeleteModalOpen={isDeleteModalOpen}
         selectedCustomer={selectedCustomer}
         refetch={refetch}
       />
-      <div className="flex justify-between items-start py-3 border-b">
+      <div className="flex items-start justify-between border-b py-3">
         <div>
           <p className="text-xl font-semibold">Cancelled Orders</p>
           <p>Total Parcels: 1</p>
@@ -111,15 +100,18 @@ const CancelledOrders = () => {
           <p>Total Advance: ৳0.00</p>
         </div>
         <div className="flex items-center gap-4">
-          <button className="btn btn-outline btn-primary">
+          <button className="btn-primary btn-outline btn">
             Advance Search
           </button>
-          <Link to="import-csv" className="btn btn-outline btn-primary">
+          <Link
+            to="/orders-processing/import-csv"
+            className="btn-primary btn-outline btn"
+          >
             Create Bulk Order
           </Link>
           <button
             onClick={handleExportClick}
-            className="btn btn-outline btn-primary"
+            className="btn-primary btn-outline btn"
           >
             Export Orders
           </button>
@@ -131,7 +123,7 @@ const CancelledOrders = () => {
       <div className="flex justify-between">
         <div className="flex items-center gap-2">
           <p>Show</p>
-          <select name="page" id="page" className="p-2 input input-bordered">
+          <select name="page" id="page" className="input-bordered input p-2">
             <option value="10">10</option>
             <option value="25">25</option>
             <option value="50">50</option>
@@ -141,7 +133,7 @@ const CancelledOrders = () => {
         </div>
         <div className="flex items-center gap-2">
           <p>Search</p>
-          <input type="text" className="input input-bordered" />
+          <input type="text" className="input-bordered input" />
         </div>
       </div>
 
@@ -159,95 +151,88 @@ const CancelledOrders = () => {
               </tr>
             </thead>
             <tbody className="bg-white">
-              {customers?.map((customer, index) => (
+              {orders?.map((order, index) => (
                 <tr key={index}>
                   <td>{index + 1}</td>
+                  <td>
+                    <span
+                      onClick={() => setIsModalOpen(!isModalOpen)}
+                      className="p-1 text-2xl text-success"
+                    >
+                      <ModalBox
+                        isModalOpen={isModalOpen}
+                        setIsModalOpen={setIsModalOpen}
+                      >
+                        <InvoiceGenerator order={order} />
+                      </ModalBox>
+                      <TbFileInvoice />
+                    </span>
+                  </td>
                   <td className="flex flex-col gap-1">
                     <div className="flex items-center space-x-3">
                       <div className="avatar">
-                        <div className="mask mask-squircle w-12 h-12">
+                        <div className="mask mask-squircle h-12 w-12">
                           <img
-                            src={customer.customer_details.image || avatarIcon}
+                            src={order?.image || avatarIcon}
                             alt="image"
                             className="rounded-full border-2 border-primary p-1"
                           />
                         </div>
                       </div>
                       <div>
-                        <div className="font-bold">
-                          {customer.customer_details.name}
-                        </div>
+                        <div className="font-bold">{order.name}</div>
                         <div className="text-sm opacity-50">
-                          {customer.customer_details.location}
-                        </div>
-                        <div className="text-sm opacity-50">
-                          {customer.customer_details.address}
+                          {order.address}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="p-1 border border-gray-500 rounded-full text-2xl text-success">
-                        <AiOutlineShoppingCart />
-                      </span>
                       <span
-                        onClick={() => {
-                          setIsEditModalOpen(true);
-                          setSelectedCustomer(customer);
-                        }}
-                        className="p-1 border border-gray-500 rounded-full text-2xl text-info"
+                        onClick={() => setIsModalOpen(!isModalOpen)}
+                        className="p-1 text-2xl text-success"
                       >
-                        <AiOutlineEdit />
-                      </span>
-                      <span
-                        onClick={() => {
-                          setIsDeleteModalOpen(true);
-                          setSelectedCustomer(customer);
-                        }}
-                        className="p-1 border border-gray-500 rounded-full text-2xl text-error"
-                      >
-                        <RiDeleteBin6Line />
+                        <ModalBox
+                          isModalOpen={isModalOpen}
+                          setIsModalOpen={setIsModalOpen}
+                        >
+                          <InvoiceGenerator order={order} />
+                        </ModalBox>
+                        <TbFileInvoice />
                       </span>
                     </div>
                   </td>
                   <td>
-                    <div>Total: {customer.purchase.total}</div>
-                    {customer.purchase.last_purchase ? (
-                      <div>
-                        Last purchase: {customer.purchase.last_purchase}
-                      </div>
-                    ) : (
-                      <></>
-                    )}
+                    <div className="avatar-group -space-x-6">
+                      {order.products?.map((product) => (
+                        <div key={product._id} className="avatar">
+                          <div className="w-12">
+                            <img src={product?.image} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </td>
                   <td>
-                    <div>Total: {customer.purchase.total}</div>
-                    {customer.purchase.last_purchase ? (
-                      <div>
-                        Last purchase: {customer.purchase.last_purchase}
-                      </div>
-                    ) : (
-                      <></>
-                    )}
-                  </td>
-                  <td>
-                    <div>
-                      <p>Processing: {customer.orders.processing}</p>
-                      {customer.orders.ready ? (
-                        <p>Ready: {customer.orders.ready}</p>
-                      ) : (
-                        <p>Ready: 0</p>
+                    <div className="flex flex-col">
+                      <p className="badge badge-info">
+                        {order?.courier}: {order?.deliveryCharge}
+                      </p>
+                      <p>Quantity: {order?.quantity}</p>
+                      <p className="">Price: {order?.total} Tk</p>
+                      {order.discount && (
+                        <p className="">
+                          Discount: {order?.total * (order?.discount / 100)} Tk
+                        </p>
                       )}
-
-                      {customer.orders.completed ? (
-                        <p>Completed: {customer.orders.completed}</p>
-                      ) : (
-                        <p>Completed: 0</p>
-                      )}
-                      {customer.orders.returned ? (
-                        <p>Returned: {customer.orders.returned}</p>
-                      ) : (
-                        <p>Returned: 0</p>
-                      )}
+                      <p className="">
+                        Total Bill:{" "}
+                        {parseInt(order?.total) +
+                          parseInt(order?.deliveryCharge) -
+                          order?.total * (order?.discount / 100)}
+                        Tk
+                      </p>
+                      <p className="">Advance: {order?.advance} Tk</p>
+                      <p className="">COD: {order?.cash} Tk</p>
                     </div>
                   </td>
                 </tr>
@@ -262,7 +247,7 @@ const CancelledOrders = () => {
                 <th className="flex justify-end">
                   <div className="join">
                     <button className="join-item btn">Previous</button>
-                    <button className="join-item btn btn-primary">1</button>
+                    <button className="btn-primary join-item btn">1</button>
                     <button className="join-item btn ">Next</button>
                   </div>
                 </th>

@@ -73,6 +73,7 @@ const StartOrder = () => {
       <StartOrderModal
         isStartNewOrderOpen={isStartNewOrderOpen}
         setIsStartNewOrderOpen={setIsStartNewOrderOpen}
+        selectedCustomer={selectedCustomer}
       />
       <p className="font-medium">Start Order</p>
       <hr />
@@ -136,7 +137,13 @@ const StartOrder = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="rounded-full border border-gray-500 p-1 text-2xl text-success">
+                    <span
+                      onClick={() => {
+                        setSelectedCustomer(customer);
+                        setIsStartNewOrderOpen(true);
+                      }}
+                      className="rounded-full border border-gray-500 p-1 text-2xl text-success"
+                    >
                       <AiOutlineShoppingCart />
                     </span>
                     <span

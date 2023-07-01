@@ -352,7 +352,7 @@ const Products = () => {
                       className="input-bordered input w-full "
                       type="number"
                       name="liftPrice"
-                      placeholder="Lift Price"
+                      placeholder="Purchase Price"
                     />
                     <input
                       className="input-bordered input w-full "

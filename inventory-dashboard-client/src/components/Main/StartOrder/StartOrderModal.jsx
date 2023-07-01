@@ -3,13 +3,21 @@ import ModalBox from "../shared/Modals/ModalBox";
 import { toast } from "react-hot-toast";
 import { StateContext } from "../../../contexts/StateProvider/StateProvider";
 import { useQuery } from "react-query";
+import { RiDeleteBin6Line } from "react-icons/ri";
 
-const StartOrderModal = ({ isStartNewOrderOpen, setIsStartNewOrderOpen }) => {
-  const { products } = useContext(StateContext);
+const StartOrderModal = ({
+  isStartNewOrderOpen,
+  setIsStartNewOrderOpen,
+  selectedCustomer,
+}) => {
+  const { products, refetchProducts } = useContext(StateContext);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [quantity, setQuantity] = useState(1);
-  const [product, setProduct] = useState({});
+  const [productList, setProductList] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
+  const [cashCollect, setCashCollect] = useState(0);
+  const [advance, setAdvance] = useState(0);
+  const [discount, setDiscount] = useState(0);
+  const [deliveryCharge, setDeliveryCharge] = useState(0);
 
   useEffect(() => {
     setIsModalOpen(isStartNewOrderOpen);
@@ -20,6 +28,8 @@ const StartOrderModal = ({ isStartNewOrderOpen, setIsStartNewOrderOpen }) => {
       setIsStartNewOrderOpen(isModalOpen);
     }
   }, [isModalOpen]);
+
+  console.log("product list ", productList);
 
   const handleOrder = (e) => {
     e.preventDefault();
@@ -36,22 +46,6 @@ const StartOrderModal = ({ isStartNewOrderOpen, setIsStartNewOrderOpen }) => {
     const cash = form.cashCollect.value;
     const instruction = form.instruction.value;
     const image = form.image.files[0];
-
-    console.log(
-      name,
-      phone,
-      address,
-      district,
-      product,
-      quantity,
-      courier,
-      deliveryCharge,
-      discount,
-      total,
-      advance,
-      cash,
-      instruction
-    );
 
     if (image) {
       const formData = new FormData();
@@ -72,8 +66,8 @@ const StartOrderModal = ({ isStartNewOrderOpen, setIsStartNewOrderOpen }) => {
               phone,
               address,
               district,
-              product,
-              quantity,
+              products: productList,
+              quantity: productList.length,
               courier,
               deliveryCharge,
               discount,
@@ -98,8 +92,8 @@ const StartOrderModal = ({ isStartNewOrderOpen, setIsStartNewOrderOpen }) => {
         phone,
         address,
         district,
-        product,
-        quantity,
+        products: productList,
+        quantity: productList.length,
         courier,
         deliveryCharge,
         discount,
@@ -112,19 +106,45 @@ const StartOrderModal = ({ isStartNewOrderOpen, setIsStartNewOrderOpen }) => {
     }
   };
 
-  const addOrder = (product) => {
+  const addOrder = (order) => {
     fetch(`${import.meta.env.VITE_SERVER_URL}/api/post-order`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
       },
-      body: JSON.stringify(product),
+      body: JSON.stringify(order),
     })
       .then((res) => res.json())
       .then((result) => {
         console.log(result);
         if (result.success) {
-          toast.success(`${product.name} is added successfully`);
+          const allProducts = order.products;
+
+          toast.success(`${order.name} is added successfully`);
+          fetch(
+            `${import.meta.env.VITE_SERVER_URL}/api/put-update-available-stock`,
+            {
+              method: "PUT",
+              headers: {
+                "content-type": "application/json",
+              },
+              body: JSON.stringify({ allProducts }),
+            }
+          )
+            .then((res) => res.json())
+            .then((result) => {
+              console.log(result);
+              if (result.success) {
+                refetchProducts();
+                toast.success("Stock is updated successfully");
+              } else {
+                toast.error("Something went wrong");
+              }
+            })
+            .catch((err) => {
+              console.log(err);
+              toast.error("Something went wrong");
+            });
           setIsModalOpen(false);
         } else {
           toast.error("Something went wrong");
@@ -137,43 +157,85 @@ const StartOrderModal = ({ isStartNewOrderOpen, setIsStartNewOrderOpen }) => {
   };
 
   useEffect(() => {
-    if (product && quantity) {
-      console.log(product.name);
-      console.log(product.salePrice);
-      const price = parseInt(product.salePrice);
-      console.log(price);
-      console.log(price * quantity);
-      setTotalPrice(price * quantity);
+    if (productList.length > 0) {
+      const total = productList.reduce(
+        (total, product) => total + product.salePrice * product.quantity,
+        0
+      );
+      setTotalPrice(total);
+      const totalAfterDiscount = total - (total * discount) / 100;
+      const totalAfterDeliveryCharge =
+        totalAfterDiscount + parseInt(deliveryCharge);
+      const totalAfterAdvance = totalAfterDeliveryCharge - advance;
+      setCashCollect(totalAfterAdvance);
     } else {
       setTotalPrice(0);
+      setCashCollect(0);
     }
-  }, [quantity, product]);
+  }, [productList, discount, deliveryCharge, advance]);
 
   console.log(totalPrice);
+
+  const handleSelectedProductList = (product) => {
+    const existingProduct = productList.find((p) => p._id === product._id);
+
+    if (existingProduct) {
+      const updatedProductList = productList.map((p) =>
+        p._id === product._id ? { ...p, quantity: p.quantity + 1 } : p
+      );
+      setProductList(updatedProductList);
+    } else {
+      const newProduct = { ...product, quantity: 1 };
+      setProductList([...productList, newProduct]);
+    }
+  };
+
+  const handleQuantityChange = (productId, quantity) => {
+    const updatedProductList = productList.map((product) =>
+      product._id === productId ? { ...product, quantity } : product
+    );
+    setProductList(updatedProductList);
+  };
+
+  const handleRemoveProduct = (productId) => {
+    setProductList(productList.filter((product) => product._id !== productId));
+  };
+
+  console.log(productList);
+
+  const [error, setError] = useState("");
+
+  console.log(selectedCustomer);
 
   return (
     <div>
       <ModalBox isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen}>
         <div className="flex flex-col ">
           <p className="border-b p-5">Order Information</p>
-          <form onSubmit={handleOrder} className="grid grid-cols-2 gap-5 p-5">
+          <form
+            onSubmit={handleOrder}
+            className="grid h-[800px] grid-cols-2 gap-5  overflow-y-scroll p-5"
+          >
             <input
               type="text"
               className="input-bordered input"
               placeholder="Facebook Name"
               name="name"
+              defaultValue={selectedCustomer?.customer_details?.name || ""}
             />
             <input
               type="text"
               className="input-bordered input"
               placeholder="Phone"
               name="phone"
+              defaultValue={selectedCustomer?.customer_details?.phone || ""}
             />
             <input
               type="text"
               className="input-bordered input col-span-2"
               placeholder="Address"
               name="address"
+              defaultValue={selectedCustomer?.customer_details?.address || ""}
             />
             <select
               name="district"
@@ -192,35 +254,77 @@ const StartOrderModal = ({ isStartNewOrderOpen, setIsStartNewOrderOpen }) => {
               <option value="Rangpur">Rangpur</option>
               <option value="Mymensingh">Mymensingh</option>
             </select>
-            <div className=" col-span-2 flex w-full flex-col gap-3 rounded bg-gray-100 p-5">
+            <div className="col-span-2 flex h-full w-fit flex-col gap-3 rounded bg-gray-100 p-5">
               <p className="text-xl font-semibold">Products</p>
-              <select
-                name="product"
-                id="product"
-                className="input-bordered input w-full"
-                onChange={(e) => {
-                  const selectedProductId = e.target.value;
-                  const selectedProduct = products.find(
-                    (product) => product._id === selectedProductId
-                  );
-                  console.log(selectedProduct);
-                  setProduct(selectedProduct);
-                }}
-              >
-                {products?.map((product) => (
-                  <option
-                    key={product._id}
-                    name="productDetails"
-                    value={product._id}
-                  >
-                    {product.name} - ৳ {product.salePrice} -{" "}
-                    {product.availableQty} available products
-                  </option>
-                ))}
-              </select>
+              <details className="dropdown">
+                <summary className="btn m-1 w-full bg-primary text-white">
+                  Select Product
+                </summary>
+                <ul className="dropdown-content menu rounded-box z-[1] w-full bg-base-100 p-2 shadow">
+                  {products?.map((product) => (
+                    <li
+                      onClick={() => handleSelectedProductList(product)}
+                      key={product._id}
+                    >
+                      <a>
+                        {product.name} - ৳ {product.salePrice} -{" "}
+                        {product.availableQty} available products
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+              {/* selected products  */}
+              <div className="flex flex-col gap-3">
+                <table>
+                  <thead>
+                    <tr className="grid grid-cols-4 gap-5">
+                      <th className="text-start">Product Name</th>
+                      <th className="text-start">Price</th>
+                      <th className="text-start">Qty</th>
+                      <th className="text-start">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {productList?.map((product) => (
+                      <tr key={product._id} className="grid grid-cols-4 gap-5">
+                        <td>{product.name}</td>
+                        <td>৳ {product.salePrice}</td>
+                        <td>
+                          <input
+                            type="number"
+                            className="input-bordered input input-sm w-24"
+                            placeholder="Quantity"
+                            min={1}
+                            max={parseInt(product.availableQty)}
+                            value={product.quantity}
+                            onChange={(e) => {
+                              handleQuantityChange(product._id, e.target.value);
+                              setError(
+                                e.target.value > parseInt(product.availableQty)
+                                  ? "Quantity can't be more than available quantity"
+                                  : ""
+                              );
+                            }}
+                          />
+                        </td>
+                        <td
+                          onClick={() => handleRemoveProduct(product._id)}
+                          className="jus flex items-center text-red-600"
+                        >
+                          <RiDeleteBin6Line />
+                        </td>
+                      </tr>
+                    ))}
+                    <tr>
+                      <p>{error}</p>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
             <select
-              className="select-bordered select col-span-2 w-full"
+              className="select-bordered select col-span-1 w-full"
               name="courier"
             >
               <option value="Pathao">Pathao</option>
@@ -238,40 +342,40 @@ const StartOrderModal = ({ isStartNewOrderOpen, setIsStartNewOrderOpen }) => {
             <input
               type="number"
               className="input-bordered input"
-              placeholder="Quantity"
-              name="quantity"
-              onChange={(e) => setQuantity(e.target.value)}
-            />
-            <input
-              type="text"
-              className="input-bordered input"
               placeholder="Delivery Charge"
               name="deliveryCharge"
+              onChange={(e) => {
+                setDeliveryCharge(e.target.value);
+              }}
             />
             <input
-              type="text"
+              type="number"
               className="input-bordered input"
-              placeholder="Discount"
+              placeholder="Discount %"
               name="discount"
+              onChange={(e) => setDiscount(e.target.value)}
             />
             <input
-              type="text"
+              type="number"
               className="input-bordered input"
               placeholder="Total Bill"
               name="totalBill"
               value={totalPrice || 0}
             />
             <input
-              type="text"
+              type="number"
               className="input-bordered input"
               placeholder="Advance"
               name="advance"
+              min={0}
+              onChange={(e) => setAdvance(e.target.value)}
             />
             <input
-              type="text"
+              type="number"
               className="input-bordered input"
               placeholder="Cash Collect"
               name="cashCollect"
+              value={cashCollect || 0}
             />
             <input
               type="text"

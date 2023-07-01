@@ -32,7 +32,7 @@ const CompletedOrders = () => {
     refetch,
   } = useQuery("orders", async () => {
     const response = await fetch(
-      `${import.meta.env.VITE_SERVER_URL}/api/get-orders`,
+      `${import.meta.env.VITE_SERVER_URL}/api/get-orders/completed`,
       {
         method: "GET",
         headers: {
@@ -43,17 +43,13 @@ const CompletedOrders = () => {
     if (!response.ok) {
       throw new Error("Failed to fetch customers");
     }
-    return response
-      .json()
-      .then((data) =>
-        data.filter((order) => order.orderStatus === "completed")
-      );
+    return response.json().then((data) => data.orders);
   });
 
   console.log(orders);
 
   const handleExportClick = () => {
-    fetch(`${import.meta.env.VITE_SERVER_URL}/api/customer-export`, {
+    fetch(`${import.meta.env.VITE_SERVER_URL}/api/order-export`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -116,7 +112,7 @@ const CompletedOrders = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-start py-3 border-b">
+      <div className="flex items-start justify-between border-b py-3">
         <div>
           <p className="text-xl font-semibold">Completed Orders</p>
           <p>Total Parcels: 1</p>
@@ -126,15 +122,18 @@ const CompletedOrders = () => {
           <p>Total Advance: ৳0.00</p>
         </div>
         <div className="flex items-center gap-4">
-          <button className="btn btn-outline btn-primary">
+          <button className="btn-primary btn-outline btn">
             Advance Search
           </button>
-          <Link to="import-csv" className="btn btn-outline btn-primary">
+          <Link
+            to="/orders-processing/import-csv"
+            className="btn-primary btn-outline btn"
+          >
             Create Bulk Order
           </Link>
           <button
             onClick={handleExportClick}
-            className="btn btn-outline btn-primary"
+            className="btn-primary btn-outline btn"
           >
             Export Orders
           </button>
@@ -146,7 +145,7 @@ const CompletedOrders = () => {
       <div className="flex justify-between">
         <div className="flex items-center gap-2">
           <p>Show</p>
-          <select name="page" id="page" className="p-2 input input-bordered">
+          <select name="page" id="page" className="input-bordered input p-2">
             <option value="10">10</option>
             <option value="25">25</option>
             <option value="50">50</option>
@@ -156,7 +155,7 @@ const CompletedOrders = () => {
         </div>
         <div className="flex items-center gap-2">
           <p>Search</p>
-          <input type="text" className="input input-bordered" />
+          <input type="text" className="input-bordered input" />
         </div>
       </div>
 
@@ -195,7 +194,7 @@ const CompletedOrders = () => {
                   <td className="flex flex-col gap-1">
                     <div className="flex items-center space-x-3">
                       <div className="avatar">
-                        <div className="mask mask-squircle w-12 h-12">
+                        <div className="mask mask-squircle h-12 w-12">
                           <img
                             src={order?.image || avatarIcon}
                             alt="image"
@@ -217,9 +216,9 @@ const CompletedOrders = () => {
                       >
                         <ModalBox
                           isModalOpen={isModalOpen}
-                          setIsModalOpen={setIsEditModalOpen}
+                          setIsModalOpen={setIsModalOpen}
                         >
-                          <InvoiceGenerator item={order} />
+                          <InvoiceGenerator order={order} />
                         </ModalBox>
                         <TbFileInvoice />
                       </span>
@@ -227,7 +226,7 @@ const CompletedOrders = () => {
                         onClick={() => {
                           handleOrderStatus(order._id, "returned");
                         }}
-                        className="tooltip p-1 border border-gray-500 rounded-full text-2xl text-error"
+                        className="tooltip rounded-full border border-gray-500 p-1 text-2xl text-error"
                         data-tip="Order Return"
                       >
                         <RiArrowGoBackLine className="text-lg" />
@@ -235,22 +234,37 @@ const CompletedOrders = () => {
                     </div>
                   </td>
                   <td>
-                    <img
-                      className="w-10 h-10 rounded-full object-cover"
-                      src={order.product.image}
-                      alt=""
-                    />
+                    <div className="avatar-group -space-x-6">
+                      {order.products?.map((product) => (
+                        <div key={product._id} className="avatar">
+                          <div className="w-12">
+                            <img src={product?.image} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </td>
                   <td>
                     <div className="flex flex-col">
                       <p className="badge badge-info">
                         {order?.courier}: {order?.deliveryCharge}
                       </p>
-                      <p className="">Price: {order?.product?.salePrice}</p>
                       <p>Quantity: {order?.quantity}</p>
-                      <p className="">Total Bill: {order?.total}</p>
-                      <p className="">Advance: {order?.advance}</p>
-                      <p className="">COD: {order?.total - order?.advance}</p>
+                      <p className="">Price: {order?.total} Tk</p>
+                      {order.discount && (
+                        <p className="">
+                          Discount: {order?.total * (order?.discount / 100)} Tk
+                        </p>
+                      )}
+                      <p className="">
+                        Total Bill:{" "}
+                        {parseInt(order?.total) +
+                          parseInt(order?.deliveryCharge) -
+                          order?.total * (order?.discount / 100)}
+                        Tk
+                      </p>
+                      <p className="">Advance: {order?.advance} Tk</p>
+                      <p className="">COD: {order?.cash} Tk</p>
                     </div>
                   </td>
                 </tr>
@@ -265,7 +279,7 @@ const CompletedOrders = () => {
                 <th className="flex justify-end">
                   <div className="join">
                     <button className="join-item btn">Previous</button>
-                    <button className="join-item btn btn-primary">1</button>
+                    <button className="btn-primary join-item btn">1</button>
                     <button className="join-item btn ">Next</button>
                   </div>
                 </th>

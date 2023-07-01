@@ -1,72 +1,8 @@
 import React, { useRef } from "react";
-import { toPng } from "html-to-image";
-import { jsPDF } from "jspdf";
-
 import ReactToPrint from "react-to-print";
+import Barcode from "react-barcode";
 
-const InvoiceGenerator = ({ item }) => {
-  const SaveAsPDFHandler = () => {
-    const dom = document.getElementById("print");
-    toPng(dom)
-      .then((dataUrl) => {
-        const img = new Image();
-        img.crossOrigin = "annoymous";
-        img.src = dataUrl;
-        img.onload = () => {
-          // Initialize the PDF.
-          const pdf = new jsPDF({
-            orientation: "portrait",
-            unit: "in",
-            format: [8.3, 11.7],
-          });
-
-          // Define reused data
-          const imgProps = pdf.getImageProperties(img);
-          const imageType = imgProps.fileType;
-          const pdfWidth = pdf.internal.pageSize.getWidth();
-
-          // Calculate the number of pages.
-          const pxFullHeight = imgProps.height;
-          const pxPageHeight = Math.floor((imgProps.width * 11.7) / 8.3);
-          const nPages = Math.ceil(pxFullHeight / pxPageHeight);
-
-          // Define pageHeight separately so it can be trimmed on the final page.
-          let pageHeight = pdf.internal.pageSize.getHeight();
-
-          // Create a one-page canvas to split up the full image.
-          const pageCanvas = document.createElement("canvas");
-          const pageCtx = pageCanvas.getContext("2d");
-          pageCanvas.width = imgProps.width;
-          pageCanvas.height = pxPageHeight;
-
-          for (let page = 0; page < nPages; page++) {
-            // Trim the final page to reduce file size.
-            if (page === nPages - 1 && pxFullHeight % pxPageHeight !== 0) {
-              pageCanvas.height = pxFullHeight % pxPageHeight;
-              pageHeight = (pageCanvas.height * pdfWidth) / pageCanvas.width;
-            }
-            // Display the page.
-            const w = pageCanvas.width;
-            const h = pageCanvas.height;
-            pageCtx.fillStyle = "white";
-            pageCtx.fillRect(0, 0, w, h);
-            pageCtx.drawImage(img, 0, page * pxPageHeight, w, h, 0, 0, w, h);
-
-            // Add the page to the PDF.
-            if (page) pdf.addPage();
-
-            const imgData = pageCanvas.toDataURL(`image/&#2547;{imageType}`, 1);
-            pdf.addImage(imgData, imageType, 0, 0, pdfWidth, pageHeight);
-          }
-          // Output / Save
-          pdf.save(`invoice.pdf`);
-        };
-      })
-      .catch((error) => {
-        console.error("oops, something went wrong!", error);
-      });
-  };
-
+const InvoiceGenerator = ({ order }) => {
   const componentRef = useRef();
 
   function formatStockDate(isoTimestamp) {
@@ -80,8 +16,20 @@ const InvoiceGenerator = ({ item }) => {
     return formattedDate;
   }
 
+  console.log(order);
+
+  function generateUUID() {
+    return "x4xyxyxyx".replace(/[xy]/g, function (c) {
+      var r = (Math.random() * 16) | 0,
+        v = c === "x" ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  }
+
+  console.log(generateUUID());
+
   return (
-    <div className="p-5">
+    <div className="container mx-auto h-full w-fit p-5">
       <div
         style={{
           padding: "1rem",
@@ -96,7 +44,7 @@ const InvoiceGenerator = ({ item }) => {
             display: "grid",
             gridTemplateColumns: "1fr 1fr",
             borderBottom: "1px solid black",
-            padding: "1px",
+            padding: "5px",
           }}
         >
           <div style={{ display: "flex", alignItems: "center" }}>
@@ -116,8 +64,14 @@ const InvoiceGenerator = ({ item }) => {
               <span>Phone: 01700000000, Email: admin@momley.com</span>
             </div>
           </div>
-          <div style={{ display: "flex", justifyContent: "flex-end" }}>
-            <p>Invoice ID: {item._id}</p>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              fontSize: "12px",
+            }}
+          >
+            <p>Invoice ID: {order?._id}</p>
           </div>
         </div>
 
@@ -125,23 +79,27 @@ const InvoiceGenerator = ({ item }) => {
           style={{
             margin: "10px 0",
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
+            gridTemplateColumns: "1fr 1fr 1fr 1fr",
             fontSize: "14px",
           }}
         >
           <div style={{ display: "flex", flexDirection: "column" }}>
             <p style={{ fontWeight: "bold" }}>Order Info</p>
-            <p>Order ID: {item._id}</p>
-            <p>Placed: {formatStockDate(item.timestamp)}</p>
-            <p>Total Product: {item.length || 1}</p>
-            <p>Delivery: Momley</p>
+            <p>Order ID: {order?._id}</p>
+            <p>Placed: {formatStockDate(order?.timestamp)}</p>
+            <p>Payment Method: COD:Partial Paid</p>
+            <p>Total Product: {order?.quantity || 1}</p>
+            <p>Delivery: {order?.courier}</p>
+          </div>
+          <div className="col-span-2 w-[50%]">
+            <Barcode value={order?.orderId} width={2} />
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
             <p style={{ fontWeight: "bold" }}>Delivery Address</p>
-            <p>Name: {item?.name}</p>
-            <p>Address: {item.address}</p>
-            <p>Phone: {item.phone}</p>
-            <p>Email: {item?.email}</p>
+            <p>Name: {order?.name}</p>
+            <p>Address: {order?.address}</p>
+            <p>Phone: {order?.phone}</p>
+            <p>Email: {order?.email}</p>
           </div>
         </div>
 
@@ -158,98 +116,72 @@ const InvoiceGenerator = ({ item }) => {
               <thead>
                 <tr
                   style={{
-                    border: "2px solid #000",
                     fontSize: "14px",
                     backgroundColor: "#ccc",
                     padding: "5px",
                   }}
                 >
                   <th style={{ textAlign: "start" }}>SL</th>
-                  <th style={{ textAlign: "center" }}>Id</th>
                   <th style={{ textAlign: "center" }}>Product</th>
-                  <th style={{ textAlign: "center" }}>Weight</th>
-                  <th style={{ textAlign: "center" }}>Inv</th>
                   <th style={{ textAlign: "center" }}>Quantity</th>
-                  <th style={{ textAlign: "center" }}>Price(Tk)</th>
-                  <th style={{ textAlign: "center" }}>Total(Tk)</th>
+                  <th style={{ textAlign: "center" }}>Unit Price</th>
+                  <th style={{ textAlign: "center" }}>Total Price</th>
                 </tr>
               </thead>
-              <tbody style={{ color: "#0066cc" }}>
-                <tr style={{ marginTop: "5px", border: "1px solid #000" }}>
-                  <td
-                    style={{
-                      minWidth: "10px",
-                      textAlign: "start",
-                      padding: "0px 5px",
-                    }}
+              <tbody style={{ color: "#000" }}>
+                {order?.products?.map((item, index) => (
+                  <tr
+                    key={item._id}
+                    style={{ marginTop: "5px", border: "1px solid #ccc" }}
                   >
-                    1
-                  </td>
-                  <td
-                    style={{
-                      minWidth: "50px",
-                      textAlign: "center",
-                      fontSize: "10px",
-                      padding: "0px 5px",
-                    }}
-                  >
-                    {item.product._id}
-                  </td>
-                  <td
-                    style={{
-                      minWidth: "50px",
-                      textAlign: "center",
-                      padding: "0px 5px",
-                    }}
-                  >
-                    {item.product?.name}
-                  </td>
-                  <td
-                    style={{
-                      minWidth: "50px",
-                      textAlign: "center",
-                      padding: "0px 5px",
-                    }}
-                  >
-                    {item.product?.weight}
-                  </td>
-                  <td
-                    style={{
-                      minWidth: "50px",
-                      textAlign: "center",
-                      padding: "0px 5px",
-                    }}
-                  >
-                    {item.product?.weight}
-                  </td>
-                  <td
-                    style={{
-                      minWidth: "50px",
-                      textAlign: "center",
-                      padding: "0px 5px",
-                    }}
-                  >
-                    {item.quantity}
-                  </td>
-                  <td
-                    style={{
-                      minWidth: "50px",
-                      textAlign: "center",
-                      padding: "0px 5px",
-                    }}
-                  >
-                    {item.product.salePrice}
-                  </td>
-                  <td
-                    style={{
-                      minWidth: "50px",
-                      textAlign: "center",
-                      padding: "0px 5px",
-                    }}
-                  >
-                    {item.total}
-                  </td>
-                </tr>
+                    <td
+                      style={{
+                        minWidth: "10px",
+                        textAlign: "start",
+                        padding: "0px 5px",
+                      }}
+                    >
+                      {index + 1}
+                    </td>
+                    <td
+                      style={{
+                        minWidth: "50px",
+                        textAlign: "center",
+                        padding: "0px 5px",
+                      }}
+                    >
+                      {item?.name}
+                    </td>
+
+                    <td
+                      style={{
+                        minWidth: "50px",
+                        textAlign: "center",
+                        padding: "0px 5px",
+                      }}
+                    >
+                      {item.quantity}
+                    </td>
+                    <td
+                      style={{
+                        minWidth: "50px",
+                        textAlign: "center",
+                        padding: "0px 5px",
+                      }}
+                    >
+                      {item?.salePrice}
+                    </td>
+                    <td
+                      style={{
+                        minWidth: "50px",
+                        textAlign: "center",
+                        padding: "0px 5px",
+                      }}
+                    >
+                      {item.salePrice * item.quantity} Tk
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -266,83 +198,79 @@ const InvoiceGenerator = ({ item }) => {
               style={{
                 display: "grid",
                 gridTemplateColumns: "1fr 1fr",
-                border: "2px solid black",
-                padding: "1px",
-                width: "300px",
-              }}
-            >
-              <span> Total Weight:</span>
-              <span style={{ textAlign: "end" }}>
-                {item?.totalWeight || "1kg"}
-              </span>
-            </div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                border: "2px solid black",
-                padding: "1px",
-                width: "300px",
-              }}
-            >
-              <span>List Price Sum: </span>
-              <span style={{ textAlign: "end" }}>
-                {item?.product.salePrice}
-              </span>
-            </div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                border: "2px solid black",
-                padding: "1px",
+                border: "1px solid #ccc",
+                padding: "4px",
                 width: "300px",
               }}
             >
               <span>Subtotal </span>
+              <span style={{ textAlign: "end" }}>{order?.total} Tk</span>
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                border: "1px solid #ccc",
+                padding: "4px",
+                width: "300px",
+              }}
+            >
+              <span>Shipping: </span>
               <span style={{ textAlign: "end" }}>
-                {item?.product.salePrice}
+                {order?.deliveryCharge} Tk
               </span>
             </div>
             <div
               style={{
                 display: "grid",
                 gridTemplateColumns: "1fr 1fr",
-                border: "2px solid black",
-                padding: "1px",
-                width: "300px",
-              }}
-            >
-              <span>Shipping: </span>
-              <span style={{ textAlign: "end" }}>{item?.deliveryCharge}</span>
-            </div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                border: "2px solid black",
-                padding: "1px",
+                border: "1px solid #ccc",
+                padding: "4px",
                 width: "300px",
               }}
             >
               <span>Total: </span>
-              <span style={{ textAlign: "end" }}>{item?.total}</span>
+              <span style={{ textAlign: "end" }}>
+                {parseInt(order?.total) + parseInt(order?.deliveryCharge)} Tk
+              </span>
             </div>
             <div
               style={{
                 display: "grid",
                 gridTemplateColumns: "1fr 1fr",
-                border: "2px solid black",
-                padding: "1px",
+                border: "1px solid #ccc",
+                padding: "4px",
                 width: "300px",
               }}
             >
+              <span>Cash Payment: </span>
+              <span style={{ textAlign: "end" }}>{order?.advance} Tk</span>
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "2fr 1fr",
+                border: "1px solid #ccc",
+                padding: "4px",
+                width: "300px",
+                backgroundColor: "#ccc",
+              }}
+            >
               <span>Customer Payable: </span>
-              <span style={{ textAlign: "end" }}>{item?.total}</span>
+              <span style={{ textAlign: "end" }}>{order?.cash} Tk</span>
             </div>
           </div>
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            Thank you for your order
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
+            <p style={{ fontWeight: "bold" }}>
+              IF YOU HAVE ANY QUESTION CONCERNING THIS INVOICE. CONTACT OUR CARE
+            </p>
+            <p>DEPARTMENT AT CARE@MOMLEY.COM Thank you for your order</p>
           </div>
         </div>
       </div>
@@ -355,12 +283,6 @@ const InvoiceGenerator = ({ item }) => {
           )}
           content={() => componentRef.current}
         />
-        <button
-          className="flex w-full items-center justify-center space-x-1 rounded-md border border-blue-500 py-2 text-sm text-blue-500 shadow-sm hover:bg-blue-500 hover:text-white"
-          onClick={SaveAsPDFHandler}
-        >
-          <span>Download</span>
-        </button>
       </div>
     </div>
   );
