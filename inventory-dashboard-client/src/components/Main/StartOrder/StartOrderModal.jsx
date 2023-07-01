@@ -137,13 +137,15 @@ const StartOrderModal = ({ isStartNewOrderOpen, setIsStartNewOrderOpen }) => {
   };
 
   useEffect(() => {
-    if (product) {
+    if (product && quantity) {
       console.log(product.name);
       console.log(product.salePrice);
       const price = parseInt(product.salePrice);
       console.log(price);
       console.log(price * quantity);
       setTotalPrice(price * quantity);
+    } else {
+      setTotalPrice(0);
     }
   }, [quantity, product]);
 
@@ -153,30 +155,30 @@ const StartOrderModal = ({ isStartNewOrderOpen, setIsStartNewOrderOpen }) => {
     <div>
       <ModalBox isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen}>
         <div className="flex flex-col ">
-          <p className="p-5 border-b">Order Information</p>
+          <p className="border-b p-5">Order Information</p>
           <form onSubmit={handleOrder} className="grid grid-cols-2 gap-5 p-5">
             <input
               type="text"
-              className="input input-bordered"
+              className="input-bordered input"
               placeholder="Facebook Name"
               name="name"
             />
             <input
               type="text"
-              className="input input-bordered"
+              className="input-bordered input"
               placeholder="Phone"
               name="phone"
             />
             <input
               type="text"
-              className="input input-bordered col-span-2"
+              className="input-bordered input col-span-2"
               placeholder="Address"
               name="address"
             />
             <select
               name="district"
               id="district"
-              className="input input-bordered col-span-2"
+              className="input-bordered input col-span-2"
             >
               <option value="" disabled>
                 Select Location
@@ -190,12 +192,12 @@ const StartOrderModal = ({ isStartNewOrderOpen, setIsStartNewOrderOpen }) => {
               <option value="Rangpur">Rangpur</option>
               <option value="Mymensingh">Mymensingh</option>
             </select>
-            <div className=" col-span-2 bg-gray-100 p-5 rounded flex flex-col gap-3 w-full">
+            <div className=" col-span-2 flex w-full flex-col gap-3 rounded bg-gray-100 p-5">
               <p className="text-xl font-semibold">Products</p>
               <select
                 name="product"
                 id="product"
-                className="input input-bordered w-full"
+                className="input-bordered input w-full"
                 onChange={(e) => {
                   const selectedProductId = e.target.value;
                   const selectedProduct = products.find(
@@ -218,7 +220,7 @@ const StartOrderModal = ({ isStartNewOrderOpen, setIsStartNewOrderOpen }) => {
               </select>
             </div>
             <select
-              className="select select-bordered w-full col-span-2"
+              className="select-bordered select col-span-2 w-full"
               name="courier"
             >
               <option value="Pathao">Pathao</option>
@@ -235,64 +237,64 @@ const StartOrderModal = ({ isStartNewOrderOpen, setIsStartNewOrderOpen }) => {
             </select>
             <input
               type="number"
-              className="input input-bordered"
+              className="input-bordered input"
               placeholder="Quantity"
               name="quantity"
               onChange={(e) => setQuantity(e.target.value)}
             />
             <input
               type="text"
-              className="input input-bordered"
+              className="input-bordered input"
               placeholder="Delivery Charge"
               name="deliveryCharge"
             />
             <input
               type="text"
-              className="input input-bordered"
+              className="input-bordered input"
               placeholder="Discount"
               name="discount"
             />
             <input
               type="text"
-              className="input input-bordered"
+              className="input-bordered input"
               placeholder="Total Bill"
               name="totalBill"
-              value={totalPrice}
+              value={totalPrice || 0}
             />
             <input
               type="text"
-              className="input input-bordered"
+              className="input-bordered input"
               placeholder="Advance"
               name="advance"
             />
             <input
               type="text"
-              className="input input-bordered"
+              className="input-bordered input"
               placeholder="Cash Collect"
               name="cashCollect"
             />
             <input
               type="text"
-              className="input input-bordered col-span-2"
+              className="input-bordered input col-span-2"
               placeholder="Exchange/special instruction"
               name="instruction"
             />
-            <div className="w-60 col-span-2 space-y-2">
+            <div className="col-span-2 w-60 space-y-2">
               <p>Other Pictures</p>
               <input
                 type="file"
                 name="image"
-                className="file-input file-input-bordered  file-input-primary w-fit"
+                className="file-input-bordered file-input-primary  file-input w-fit"
               />
             </div>
             <button
               onClick={() => setIsModalOpen(false)}
               type="button"
-              className="btn btn-error btn-outline"
+              className="btn-error btn-outline btn"
             >
               Cancel
             </button>
-            <button type="submit" className="btn btn-primary">
+            <button type="submit" className="btn-primary btn">
               Save
             </button>
           </form>

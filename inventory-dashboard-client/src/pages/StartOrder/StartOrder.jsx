@@ -79,20 +79,20 @@ const StartOrder = () => {
       <p>Please enter Customer Phone Number or Facebook Name!!</p>
       <form onSubmit={handleSearch} className="flex flex-col gap-5">
         <input
-          className="input input-bordered input-primary w-1/2"
+          className="input-bordered input-primary input w-1/2"
           type="text"
           name="search-key"
           placeholder="Name or Phone Number (any one)"
         />
-        <button type="submit" className="btn btn-primary w-1/2">
+        <button type="submit" className="btn-primary btn w-1/2">
           Search
         </button>
       </form>
-      <div className="flex gap-2 items-center">
+      <div className="flex items-center gap-2">
         আপনি যে কাস্টমার খুঁজছেন তিনি তালিকায় আছে কি না দেখুন। না থাকলে এখানে
         <button
           onClick={() => setIsStartNewOrderOpen(true)}
-          className="p-2 btn btn-info"
+          className="btn-info btn p-2"
         >
           Start New Order
         </button>
@@ -115,7 +115,7 @@ const StartOrder = () => {
                 <td className="flex flex-col gap-1">
                   <div className="flex items-center space-x-3">
                     <div className="avatar">
-                      <div className="mask mask-squircle w-12 h-12">
+                      <div className="mask mask-squircle h-12 w-12">
                         <img
                           src={customer.customer_details.image || avatarIcon}
                           alt="image"
@@ -136,7 +136,7 @@ const StartOrder = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="p-1 border border-gray-500 rounded-full text-2xl text-success">
+                    <span className="rounded-full border border-gray-500 p-1 text-2xl text-success">
                       <AiOutlineShoppingCart />
                     </span>
                     <span
@@ -144,7 +144,7 @@ const StartOrder = () => {
                         setIsEditModalOpen(true);
                         setSelectedCustomer(customer);
                       }}
-                      className="p-1 border border-gray-500 rounded-full text-2xl text-info"
+                      className="rounded-full border border-gray-500 p-1 text-2xl text-info"
                     >
                       <AiOutlineEdit />
                     </span>
@@ -153,7 +153,7 @@ const StartOrder = () => {
                         setIsDeleteModalOpen(true);
                         setSelectedCustomer(customer);
                       }}
-                      className="p-1 border border-gray-500 rounded-full text-2xl text-error"
+                      className="rounded-full border border-gray-500 p-1 text-2xl text-error"
                     >
                       <RiDeleteBin6Line />
                     </span>
@@ -198,7 +198,7 @@ const StartOrder = () => {
               <th className="flex justify-end">
                 <div className="join">
                   <button className="join-item btn">Previous</button>
-                  <button className="join-item btn btn-primary">1</button>
+                  <button className="btn-primary join-item btn">1</button>
                   <button className="join-item btn ">Next</button>
                 </div>
               </th>

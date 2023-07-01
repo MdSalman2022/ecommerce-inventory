@@ -2,7 +2,7 @@ import React from "react";
 
 const Header = () => {
   return (
-    <div className="z-50 relative">
+    <div className="z-10 relative">
       <div className="navbar bg-base-100 shadow-lg px-5">
         <div className="flex-1">
           <a className="btn btn-ghost normal-case text-xl">

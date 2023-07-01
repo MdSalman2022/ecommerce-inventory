@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useRef } from "react";
 import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
+
+import ReactToPrint from "react-to-print";
 
 const InvoiceGenerator = ({ item }) => {
   const SaveAsPDFHandler = () => {
@@ -15,7 +17,7 @@ const InvoiceGenerator = ({ item }) => {
           const pdf = new jsPDF({
             orientation: "portrait",
             unit: "in",
-            format: [5.5, 8.5],
+            format: [8.3, 11.7],
           });
 
           // Define reused data
@@ -25,7 +27,7 @@ const InvoiceGenerator = ({ item }) => {
 
           // Calculate the number of pages.
           const pxFullHeight = imgProps.height;
-          const pxPageHeight = Math.floor((imgProps.width * 8.5) / 5.5);
+          const pxPageHeight = Math.floor((imgProps.width * 11.7) / 8.3);
           const nPages = Math.ceil(pxFullHeight / pxPageHeight);
 
           // Define pageHeight separately so it can be trimmed on the final page.
@@ -53,11 +55,11 @@ const InvoiceGenerator = ({ item }) => {
             // Add the page to the PDF.
             if (page) pdf.addPage();
 
-            const imgData = pageCanvas.toDataURL(`image/${imageType}`, 1);
+            const imgData = pageCanvas.toDataURL(`image/&#2547;{imageType}`, 1);
             pdf.addImage(imgData, imageType, 0, 0, pdfWidth, pageHeight);
           }
           // Output / Save
-          pdf.save(`invoice-${item.name}.pdf`);
+          pdf.save(`invoice.pdf`);
         };
       })
       .catch((error) => {
@@ -65,86 +67,301 @@ const InvoiceGenerator = ({ item }) => {
       });
   };
 
+  const componentRef = useRef();
+
+  function formatStockDate(isoTimestamp) {
+    const date = new Date(isoTimestamp);
+    const formattedDate = date.toLocaleDateString("en-US", {
+      day: "numeric",
+      month: "short",
+      year: "2-digit",
+    });
+
+    return formattedDate;
+  }
+
   return (
     <div className="p-5">
-      <div className="p-4" id="print">
-        <h1 className="text-center text-lg font-bold text-gray-900">INVOICE</h1>
-        <div className="mt-6 text-black">
-          <div className="mb-4 grid grid-cols-2">
-            <span className="font-bold">Invoice Number:</span>
-            <span>1</span>
-            <span className="font-bold">Cashier:</span>
-            <span>salman</span>
-            <span className="font-bold">Customer:</span>
-            <span>{item.name}</span>
+      <div
+        style={{
+          padding: "1rem",
+          color: "black",
+          fontSize: "18px",
+        }}
+        id="print"
+        ref={componentRef}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            borderBottom: "1px solid black",
+            padding: "1px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <img
+              style={{ height: "40px", width: "200px", objectFit: "cover" }}
+              src="https://i.ibb.co/TW8T2kc/logo-momley.png"
+              alt=""
+            />
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                fontSize: "12px",
+              }}
+            >
+              <span>Momley.com, 2/2 Arambag Motijheel, Dhaka-1000</span>
+              <span>Phone: 01700000000, Email: admin@momley.com</span>
+            </div>
           </div>
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <p>Invoice ID: {item._id}</p>
+          </div>
+        </div>
 
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-y border-black/10 text-sm md:text-base">
-                <th>ITEM</th>
-                <th className="text-center">QTY</th>
-                <th className="text-right">PRICE</th>
-                <th className="text-right">AMOUNT</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className="w-full">{item.name}</td>
-                <td className="min-w-[50px] text-center">{item.quantity}</td>
-                <td className="min-w-[80px] text-right">
-                  ${Number(item.product.salePrice).toFixed(2)}
-                </td>
-                <td className="min-w-[90px] text-right">
-                  ${Number(item.total).toFixed(2)}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div
+          style={{
+            margin: "10px 0",
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            fontSize: "14px",
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <p style={{ fontWeight: "bold" }}>Order Info</p>
+            <p>Order ID: {item._id}</p>
+            <p>Placed: {formatStockDate(item.timestamp)}</p>
+            <p>Total Product: {item.length || 1}</p>
+            <p>Delivery: Momley</p>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <p style={{ fontWeight: "bold" }}>Delivery Address</p>
+            <p>Name: {item?.name}</p>
+            <p>Address: {item.address}</p>
+            <p>Phone: {item.phone}</p>
+            <p>Email: {item?.email}</p>
+          </div>
+        </div>
 
-          <div className="mt-4 flex flex-col items-end space-y-2">
-            <div className="flex w-full justify-between border-t border-black/10 pt-2">
-              <span className="font-bold">Subtotal:</span>
-              <span>${item?.total}</span>
-            </div>
-            <div className="flex w-full justify-between">
-              <span className="font-bold">Discount:</span>
-              <span>${item?.discountRate}</span>
-            </div>
-            <div className="flex w-full justify-between">
-              <span className="font-bold">Tax:</span>
-              <span>${item?.taxRate}</span>
-            </div>
-            <div className="flex w-full justify-between border-t border-black/10 py-2">
-              <span className="font-bold">Total:</span>
-              <span className="font-bold">
-                ${item.total % 1 === 0 ? item.total : item?.total}
+        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+          <div>
+            <table
+              style={{
+                width: "100%",
+                textAlign: "left",
+                color: "black",
+                fontSize: "14px",
+              }}
+            >
+              <thead>
+                <tr
+                  style={{
+                    border: "2px solid #000",
+                    fontSize: "14px",
+                    backgroundColor: "#ccc",
+                    padding: "5px",
+                  }}
+                >
+                  <th style={{ textAlign: "start" }}>SL</th>
+                  <th style={{ textAlign: "center" }}>Id</th>
+                  <th style={{ textAlign: "center" }}>Product</th>
+                  <th style={{ textAlign: "center" }}>Weight</th>
+                  <th style={{ textAlign: "center" }}>Inv</th>
+                  <th style={{ textAlign: "center" }}>Quantity</th>
+                  <th style={{ textAlign: "center" }}>Price(Tk)</th>
+                  <th style={{ textAlign: "center" }}>Total(Tk)</th>
+                </tr>
+              </thead>
+              <tbody style={{ color: "#0066cc" }}>
+                <tr style={{ marginTop: "5px", border: "1px solid #000" }}>
+                  <td
+                    style={{
+                      minWidth: "10px",
+                      textAlign: "start",
+                      padding: "0px 5px",
+                    }}
+                  >
+                    1
+                  </td>
+                  <td
+                    style={{
+                      minWidth: "50px",
+                      textAlign: "center",
+                      fontSize: "10px",
+                      padding: "0px 5px",
+                    }}
+                  >
+                    {item.product._id}
+                  </td>
+                  <td
+                    style={{
+                      minWidth: "50px",
+                      textAlign: "center",
+                      padding: "0px 5px",
+                    }}
+                  >
+                    {item.product?.name}
+                  </td>
+                  <td
+                    style={{
+                      minWidth: "50px",
+                      textAlign: "center",
+                      padding: "0px 5px",
+                    }}
+                  >
+                    {item.product?.weight}
+                  </td>
+                  <td
+                    style={{
+                      minWidth: "50px",
+                      textAlign: "center",
+                      padding: "0px 5px",
+                    }}
+                  >
+                    {item.product?.weight}
+                  </td>
+                  <td
+                    style={{
+                      minWidth: "50px",
+                      textAlign: "center",
+                      padding: "0px 5px",
+                    }}
+                  >
+                    {item.quantity}
+                  </td>
+                  <td
+                    style={{
+                      minWidth: "50px",
+                      textAlign: "center",
+                      padding: "0px 5px",
+                    }}
+                  >
+                    {item.product.salePrice}
+                  </td>
+                  <td
+                    style={{
+                      minWidth: "50px",
+                      textAlign: "center",
+                      padding: "0px 5px",
+                    }}
+                  >
+                    {item.total}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-end",
+              gap: "1px",
+              width: "100%",
+            }}
+          >
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                border: "2px solid black",
+                padding: "1px",
+                width: "300px",
+              }}
+            >
+              <span> Total Weight:</span>
+              <span style={{ textAlign: "end" }}>
+                {item?.totalWeight || "1kg"}
               </span>
             </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                border: "2px solid black",
+                padding: "1px",
+                width: "300px",
+              }}
+            >
+              <span>List Price Sum: </span>
+              <span style={{ textAlign: "end" }}>
+                {item?.product.salePrice}
+              </span>
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                border: "2px solid black",
+                padding: "1px",
+                width: "300px",
+              }}
+            >
+              <span>Subtotal </span>
+              <span style={{ textAlign: "end" }}>
+                {item?.product.salePrice}
+              </span>
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                border: "2px solid black",
+                padding: "1px",
+                width: "300px",
+              }}
+            >
+              <span>Shipping: </span>
+              <span style={{ textAlign: "end" }}>{item?.deliveryCharge}</span>
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                border: "2px solid black",
+                padding: "1px",
+                width: "300px",
+              }}
+            >
+              <span>Total: </span>
+              <span style={{ textAlign: "end" }}>{item?.total}</span>
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                border: "2px solid black",
+                padding: "1px",
+                width: "300px",
+              }}
+            >
+              <span>Customer Payable: </span>
+              <span style={{ textAlign: "end" }}>{item?.total}</span>
+            </div>
+          </div>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            Thank you for your order
           </div>
         </div>
       </div>
-
-      <button
-        className="flex w-full items-center justify-center space-x-1 rounded-md border border-blue-500 py-2 text-sm text-blue-500 shadow-sm hover:bg-blue-500 hover:text-white"
-        onClick={SaveAsPDFHandler}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-4 w-4"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
+      <div className="flex gap-5">
+        <ReactToPrint
+          trigger={() => (
+            <button className="flex w-full items-center justify-center space-x-1 rounded-md border border-blue-500 py-2 text-sm text-blue-500 shadow-sm hover:bg-blue-500 hover:text-white">
+              Print this out!
+            </button>
+          )}
+          content={() => componentRef.current}
+        />
+        <button
+          className="flex w-full items-center justify-center space-x-1 rounded-md border border-blue-500 py-2 text-sm text-blue-500 shadow-sm hover:bg-blue-500 hover:text-white"
+          onClick={SaveAsPDFHandler}
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-          />
-        </svg>
-        <span>Download</span>
-      </button>
+          <span>Download</span>
+        </button>
+      </div>
     </div>
   );
 };

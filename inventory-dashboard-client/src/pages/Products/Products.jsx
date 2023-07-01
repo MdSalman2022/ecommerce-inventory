@@ -185,6 +185,38 @@ const Products = () => {
     }));
   console.log(totalSupplierLength);
 
+  const [searchResults, setSearchResults] = useState("");
+
+  const handleSearch = (e) => {
+    e.preventDefault(); // prevent page refresh on form submit
+    const form = e.target;
+    const customerSearchKey = form["search-key"].value;
+
+    console.log(customerSearchKey);
+
+    let url = `${import.meta.env.VITE_SERVER_URL}/api/search-product?`;
+
+    url += `name=${customerSearchKey}`;
+    console.log(url);
+
+    fetch(url)
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data);
+        if (data.success) {
+          toast.success("Customer Found!!");
+          setSearchResults(data.customers);
+        } else {
+          toast.error("Customer Not Found!!");
+          setSearchResults([]);
+        }
+      })
+      .catch((error) => {
+        console.error("Error searching for customers:", error);
+        setSearchResults([]);
+      });
+  };
+
   return (
     <div className="space-y-4">
       <EditProductModal
@@ -200,7 +232,7 @@ const Products = () => {
         refetchProducts={refetchProducts}
       />
       <div className="grid grid-cols-3 gap-5">
-        <div className="p-2 border bg-white rounded-lg">
+        <div className="rounded-lg border bg-white p-2">
           <p className="text-xl font-semibold">Product Stock Info</p>
           <p>Total Available</p>
           <div className="grid grid-cols-2">
@@ -212,7 +244,7 @@ const Products = () => {
             <p>{totalProductValue}</p>
           </div>
         </div>
-        <div className="p-2 border bg-white rounded-lg">
+        <div className="rounded-lg border bg-white p-2">
           <p className="text-xl font-semibold">This Month Stock In</p>
           <p>Total Available</p>
           <div className="grid grid-cols-2">
@@ -224,7 +256,7 @@ const Products = () => {
             <p>{totalProductValue}</p>
           </div>
         </div>
-        <div className="p-2 border bg-white rounded-lg">
+        <div className="rounded-lg border bg-white p-2">
           <p className="text-xl font-semibold">Last Month Stock In</p>
           <p>Total Available</p>
           <div className="grid grid-cols-2">
@@ -237,25 +269,25 @@ const Products = () => {
           </div>
         </div>
       </div>
-      <div className="flex justify-between py-3 border-b">
+      <div className="flex justify-between border-b py-3">
         <p className="text-xl font-semibold">Products List</p>
 
         <div className="flex items-center gap-4">
           <button
             onClick={handleExportClick}
-            className="btn btn-outline btn-primary"
+            className="btn-primary btn-outline btn"
           >
             Export
           </button>
           <label
             onClick={() => setIsModalOpen(!isModalOpen)}
-            className="btn btn-outline btn-primary"
+            className="btn-primary btn-outline btn"
           >
             Add Product
           </label>
           <ModalBox isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen}>
             <div className="bg-base-100">
-              <p className="text-2xl font-semibold p-5 shadow w-full">
+              <p className="w-full p-5 text-2xl font-semibold shadow">
                 Product Information
               </p>
               <div>
@@ -264,26 +296,26 @@ const Products = () => {
                   className="flex flex-col gap-3 p-5"
                 >
                   <input
-                    className="input input-bordered "
+                    className="input-bordered input "
                     type="text"
                     name="name"
                     placeholder="Product Title / Name"
                   />
                   <textarea
-                    className="input input-bordered h-24 min-h-min max-h-fit py-2 "
+                    className="input-bordered input h-24 max-h-fit min-h-min py-2 "
                     type="text"
                     name="description"
                     placeholder="Description"
                   />
                   <div className="flex gap-3">
                     <input
-                      className="input input-bordered w-1/2 "
+                      className="input-bordered input w-1/2 "
                       type="text"
                       name="brand"
                       placeholder="Brand"
                     />
                     <input
-                      className="input input-bordered w-1/2 "
+                      className="input-bordered input w-1/2 "
                       type="text"
                       name="country"
                       placeholder="Country"
@@ -294,7 +326,7 @@ const Products = () => {
                     <select
                       name="supplier"
                       id="supplier"
-                      className="input input-bordered w-1/2"
+                      className="input-bordered input w-1/2"
                     >
                       <option value="" disabled>
                         Select Supplier
@@ -305,7 +337,7 @@ const Products = () => {
                     <select
                       name="store"
                       id="store"
-                      className="input input-bordered w-1/2"
+                      className="input-bordered input w-1/2"
                     >
                       <option value="" disabled>
                         Select Store
@@ -317,13 +349,13 @@ const Products = () => {
 
                   <div className="flex gap-3">
                     <input
-                      className="input input-bordered w-full "
+                      className="input-bordered input w-full "
                       type="number"
                       name="liftPrice"
                       placeholder="Lift Price"
                     />
                     <input
-                      className="input input-bordered w-full "
+                      className="input-bordered input w-full "
                       type="number"
                       name="salePrice"
                       placeholder="Sale Price"
@@ -331,7 +363,7 @@ const Products = () => {
                   </div>
                   <div className="flex gap-3">
                     <input
-                      className="input input-bordered w-full "
+                      className="input-bordered input w-full "
                       type="number"
                       name="qty"
                       placeholder="QTY"
@@ -340,21 +372,21 @@ const Products = () => {
                     <input
                       type="file"
                       name="image"
-                      className="file-input file-input-bordered file-input-primary w-full max-w-xs"
+                      className="file-input-bordered file-input-primary file-input w-full max-w-xs"
                     />
                   </div>
                   <div>
-                    <div className="flex justify-between gap-3 w-full">
+                    <div className="flex w-full justify-between gap-3">
                       <label
                         type="button"
                         // onClick={() => setIsModalOpen(false)}
-                        className="btn btn-error btn-outline w-1/2"
+                        className="btn-outline btn-error btn w-1/2"
                       >
                         Close!
                       </label>
                       <button
                         type="submit"
-                        className="btn btn-success btn-outline w-1/2"
+                        className="btn-success btn-outline btn w-1/2"
                       >
                         Save
                       </button>
@@ -369,7 +401,7 @@ const Products = () => {
       <div className="flex justify-between">
         <div className="flex items-center gap-2">
           <p>Show</p>
-          <select name="page" id="page" className="p-2 input input-bordered">
+          <select name="page" id="page" className="input-bordered input p-2">
             <option value="10">10</option>
             <option value="25">25</option>
             <option value="50">50</option>
@@ -379,7 +411,13 @@ const Products = () => {
         </div>
         <div className="flex items-center gap-2">
           <p>Search</p>
-          <input type="text" className="input input-bordered" />
+          <form onSubmit={handleSearch}>
+            <input
+              name="search-key"
+              type="text"
+              className="input-bordered input"
+            />
+          </form>
         </div>
       </div>
 
@@ -390,7 +428,7 @@ const Products = () => {
             <thead className="bg-primary text-white">
               <tr>
                 <th className="w-5">#</th>
-                <th className="w-60 min-w-fit max-w-96">Product Name</th>
+                <th className="max-w-96 w-60 min-w-fit">Product Name</th>
                 <th>Supplier</th>
                 <th>Stock</th>
                 <th>Price</th>
@@ -398,72 +436,143 @@ const Products = () => {
               </tr>
             </thead>
             <tbody className="bg-white">
-              {products?.map((product, index) => (
-                <tr key={index}>
-                  <th className="w-5">{index + 1}</th>
-                  <td className="flex flex-col gap-1 w-60 min-w-fit max-w-96">
-                    <div className="flex items-center space-x-3">
-                      <div className="avatar">
-                        <div className="mask mask-squircle w-12 h-12">
-                          <img
-                            src={product.image || avatarIcon}
-                            alt="image"
-                            className="rounded-full border-2 border-primary p-1"
-                          />
+              {!searchResults
+                ? products?.map((product, index) => (
+                    <tr key={index}>
+                      <th className="w-5">{index + 1}</th>
+                      <td className="max-w-96 flex w-60 min-w-fit flex-col gap-1">
+                        <div className="flex items-center space-x-3">
+                          <div className="avatar">
+                            <div className="mask mask-squircle h-12 w-12">
+                              <img
+                                src={product.image || avatarIcon}
+                                alt="image"
+                                className="rounded-full border-2 border-primary p-1"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="font-bold">{product.name}</div>
+                            <div className="text-sm opacity-50">
+                              {product.location}
+                            </div>
+                            <div className="text-sm opacity-50">
+                              {product.address}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      <div>
-                        <div className="font-bold">{product.name}</div>
-                        <div className="text-sm opacity-50">
-                          {product.location}
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-full border border-gray-500 p-1 text-2xl text-success">
+                            <AiOutlineShoppingCart />
+                          </span>
+                          <span
+                            onClick={() => {
+                              setIsEditModalOpen(true);
+                              setSelectedProduct(product);
+                            }}
+                            className="rounded-full border border-gray-500 p-1 text-2xl text-info"
+                          >
+                            <AiOutlineEdit />
+                          </span>
+                          <span
+                            onClick={() => {
+                              setIsDeleteModalOpen(true);
+                              setSelectedProduct(product);
+                            }}
+                            className="rounded-full border border-gray-500 p-1 text-2xl text-error"
+                          >
+                            <RiDeleteBin6Line />
+                          </span>
                         </div>
-                        <div className="text-sm opacity-50">
-                          {product.address}
+                      </td>
+                      <td>
+                        <div>{product.supplier}</div>
+                      </td>
+                      <td>
+                        <div>Avl: {product.availableQty}</div>
+                        <div>(Qty: {product.qty})</div>
+                      </td>
+                      <td>
+                        <div>S: {product.salePrice}</div>
+                        <div>(P: {product.liftPrice})</div>
+                      </td>
+                      <td>
+                        <div>
+                          <p>
+                            Processing: {formatStockDate(product.stockDate)}
+                          </p>
                         </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="p-1 border border-gray-500 rounded-full text-2xl text-success">
-                        <AiOutlineShoppingCart />
-                      </span>
-                      <span
-                        onClick={() => {
-                          setIsEditModalOpen(true);
-                          setSelectedProduct(product);
-                        }}
-                        className="p-1 border border-gray-500 rounded-full text-2xl text-info"
-                      >
-                        <AiOutlineEdit />
-                      </span>
-                      <span
-                        onClick={() => {
-                          setIsDeleteModalOpen(true);
-                          setSelectedProduct(product);
-                        }}
-                        className="p-1 border border-gray-500 rounded-full text-2xl text-error"
-                      >
-                        <RiDeleteBin6Line />
-                      </span>
-                    </div>
-                  </td>
-                  <td>
-                    <div>{product.supplier}</div>
-                  </td>
-                  <td>
-                    <div>Avl: {product.availableQty}</div>
-                    <div>(Qty: {product.qty})</div>
-                  </td>
-                  <td>
-                    <div>S: {product.salePrice}</div>
-                    <div>(P: {product.liftPrice})</div>
-                  </td>
-                  <td>
-                    <div>
-                      <p>Processing: {formatStockDate(product.stockDate)}</p>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                      </td>
+                    </tr>
+                  ))
+                : searchResults?.map((product, index) => (
+                    <tr key={index}>
+                      <th className="w-5">{index + 1}</th>
+                      <td className="max-w-96 flex w-60 min-w-fit flex-col gap-1">
+                        <div className="flex items-center space-x-3">
+                          <div className="avatar">
+                            <div className="mask mask-squircle h-12 w-12">
+                              <img
+                                src={product.image || avatarIcon}
+                                alt="image"
+                                className="rounded-full border-2 border-primary p-1"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="font-bold">{product.name}</div>
+                            <div className="text-sm opacity-50">
+                              {product.location}
+                            </div>
+                            <div className="text-sm opacity-50">
+                              {product.address}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-full border border-gray-500 p-1 text-2xl text-success">
+                            <AiOutlineShoppingCart />
+                          </span>
+                          <span
+                            onClick={() => {
+                              setIsEditModalOpen(true);
+                              setSelectedProduct(product);
+                            }}
+                            className="rounded-full border border-gray-500 p-1 text-2xl text-info"
+                          >
+                            <AiOutlineEdit />
+                          </span>
+                          <span
+                            onClick={() => {
+                              setIsDeleteModalOpen(true);
+                              setSelectedProduct(product);
+                            }}
+                            className="rounded-full border border-gray-500 p-1 text-2xl text-error"
+                          >
+                            <RiDeleteBin6Line />
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <div>{product.supplier}</div>
+                      </td>
+                      <td>
+                        <div>Avl: {product.availableQty}</div>
+                        <div>(Qty: {product.qty})</div>
+                      </td>
+                      <td>
+                        <div>S: {product.salePrice}</div>
+                        <div>(P: {product.liftPrice})</div>
+                      </td>
+                      <td>
+                        <div>
+                          <p>
+                            Processing: {formatStockDate(product.stockDate)}
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
             </tbody>
             <tfoot className="bg-white">
               <tr>
@@ -474,7 +583,7 @@ const Products = () => {
                 <th className="flex justify-end">
                   <div className="join">
                     <button className="join-item btn">Previous</button>
-                    <button className="join-item btn btn-primary">1</button>
+                    <button className="btn-primary join-item btn">1</button>
                     <button className="join-item btn ">Next</button>
                   </div>
                 </th>
