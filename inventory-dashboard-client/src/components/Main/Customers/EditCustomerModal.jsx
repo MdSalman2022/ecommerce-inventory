@@ -36,6 +36,7 @@ const EditCustomerModal = ({
         .then((imgUpload) => {
           if (imgUpload.success) {
             const customer = {
+              ...selectedCustomer,
               image: imgUpload.data.url,
               name,
               phone,
@@ -54,6 +55,7 @@ const EditCustomerModal = ({
         });
     } else {
       const customer = {
+        ...selectedCustomer,
         image: selectedCustomer?.image,
         name,
         phone,
@@ -69,7 +71,7 @@ const EditCustomerModal = ({
 
   const updateCustomer = (customer) => {
     fetch(
-      `${import.meta.env.VITE_SERVER_URL}/api/put-edit-order/${
+      `${import.meta.env.VITE_SERVER_URL}/api/put-edit-customer/${
         selectedCustomer?._id
       }`,
       {
@@ -112,7 +114,7 @@ const EditCustomerModal = ({
     <div>
       <ModalBox isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen}>
         <div className="bg-base-100">
-          <p className="text-2xl font-semibold p-5 shadow w-full">
+          <p className="w-full p-5 text-2xl font-semibold shadow">
             Customer Information
           </p>
           <div>
@@ -121,21 +123,21 @@ const EditCustomerModal = ({
               className="flex flex-col gap-3 p-5"
             >
               <input
-                className="input input-bordered "
+                className="input-bordered input "
                 type="text"
                 name="name"
                 placeholder="Facebook Name"
                 defaultValue={selectedCustomer?.customer_details?.name}
               />
               <input
-                className="input input-bordered "
+                className="input-bordered input "
                 type="text"
                 name="phone"
                 placeholder="Phone"
                 defaultValue={selectedCustomer?.customer_details?.phone}
               />
               <input
-                className="input input-bordered "
+                className="input-bordered input "
                 type="text"
                 name="address"
                 placeholder="Address"
@@ -146,7 +148,7 @@ const EditCustomerModal = ({
                 <select
                   name="district"
                   id="district"
-                  className="input input-bordered"
+                  className="input-bordered input"
                   defaultValue={selectedCustomer?.customer_details?.location}
                 >
                   <option value="" disabled>
@@ -163,26 +165,26 @@ const EditCustomerModal = ({
                 </select>
                 <div className="flex items-center gap-3">
                   <img
-                    className="w-12 h-12 rounded object-cover"
+                    className="h-12 w-12 rounded object-cover"
                     src={selectedCustomer?.customer_details?.image}
                     alt=""
                   />{" "}
                   <input
                     type="file"
                     name="image"
-                    className="file-input file-input-bordered file-input-primary w-full max-w-xs"
+                    className="file-input-bordered file-input-primary file-input w-full max-w-xs"
                   />
                 </div>
               </div>
               <input
-                className="input input-bordered "
+                className="input-bordered input "
                 type="text"
                 name="link"
                 placeholder="Facebook inbox link"
                 defaultValue={selectedCustomer?.customer_details?.link}
               />
               <div>
-                <div className="flex justify-between gap-3 w-full">
+                <div className="flex w-full justify-between gap-3">
                   <label
                     type="button"
                     onClick={() => {
@@ -193,7 +195,7 @@ const EditCustomerModal = ({
                   >
                     Close!
                   </label>
-                  <button type="submit" className="btn btn-success btn-outline">
+                  <button type="submit" className="btn-success btn-outline btn">
                     Save
                   </button>
                 </div>

@@ -18,6 +18,7 @@ const StartOrderModal = ({
   const [advance, setAdvance] = useState(0);
   const [discount, setDiscount] = useState(0);
   const [deliveryCharge, setDeliveryCharge] = useState(0);
+  const [newCustomerId, setNewCustomerId] = useState("");
 
   useEffect(() => {
     setIsModalOpen(isStartNewOrderOpen);
@@ -53,6 +54,37 @@ const StartOrderModal = ({
       const url = `https://api.imgbb.com/1/upload?key=${
         import.meta.env.VITE_IMGBB_KEY
       }`;
+      if (!selectedCustomer._id) {
+        const customerInfo = {
+          name,
+          phone,
+          address,
+          location: district,
+        };
+
+        fetch(`${import.meta.env.VITE_SERVER_URL}/api/add-customer`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify(customerInfo),
+        })
+          .then((res) => res.json())
+          .then((result) => {
+            console.log(result);
+            if (result.success) {
+              setNewCustomerId(result?.result?.insertedId);
+              toast.success(`${customerInfo.name} is added successfully`);
+              setIsModalOpen(false);
+            } else {
+              toast.error("Something went wrong");
+            }
+          })
+          .catch((err) => {
+            console.log(err);
+            toast.error("Something went wrong");
+          });
+      }
       fetch(url, {
         method: "POST",
         body: formData,
@@ -62,6 +94,7 @@ const StartOrderModal = ({
           if (imgUpload.success) {
             const order = {
               image: imgUpload.data.url,
+              customerId: selectedCustomer?._id || newCustomerId,
               name,
               phone,
               address,
@@ -75,10 +108,26 @@ const StartOrderModal = ({
               advance,
               cash,
               instruction,
+              timestamp: new Date().toISOString(),
+            };
+            const customerInfo = {
+              id: selectedCustomer?._id || newCustomerId,
+              image: selectedCustomer?.image || "",
+              name,
+              phone,
+              address,
+              location: district,
+              total:parseInt(selectedCustomer?.purchase?.total) || 0 + total + deliveryCharge -(total * (discount / 100)),
+              order,
+              processingCount: selectedCustomer?.orders?.processing + 1,
+              readyCount: selectedCustomer?.orders?.ready,
+              completedCount: selectedCustomer?.orders?.completed,
+              returnedCount: selectedCustomer?.orders?.returnedCount,
             };
 
             console.log(order);
             addOrder(order);
+            updateCustomer(customerInfo);
           }
         })
         .catch((err) => {
@@ -88,6 +137,7 @@ const StartOrderModal = ({
     } else {
       const order = {
         image: "",
+        customerId: selectedCustomer?._id || newCustomerId,
         name,
         phone,
         address,
@@ -101,8 +151,25 @@ const StartOrderModal = ({
         advance,
         cash,
         instruction,
+        timestamp: new Date().toISOString(),
       };
+      const customerInfo = {
+        id: selectedCustomer?._id || newCustomerId,
+        image: selectedCustomer?.image || "",
+        name,
+        phone,
+        address,
+        location: district,
+        total:parseInt(selectedCustomer?.purchase?.total) || 0 + total + deliveryCharge -(total * (discount / 100)),
+        order,
+        processingCount: selectedCustomer?.orders?.processing + 1,
+        readyCount: selectedCustomer?.orders?.ready,
+        completedCount: selectedCustomer?.orders?.completed,
+        returnedCount: selectedCustomer?.orders?.returnedCount,
+      };
+
       addOrder(order);
+      updateCustomer(customerInfo);
     }
   };
 
@@ -145,6 +212,35 @@ const StartOrderModal = ({
               console.log(err);
               toast.error("Something went wrong");
             });
+          setIsModalOpen(false);
+        } else {
+          toast.error("Something went wrong");
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        toast.error("Something went wrong");
+      });
+  };
+  const updateCustomer = (customer) => {
+    fetch(
+      `${import.meta.env.VITE_SERVER_URL}/api/put-edit-customer/${
+        customer?.id
+      }`,
+      {
+        method: "PUT",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(customer),
+      }
+    )
+      .then((res) => res.json())
+      .then((result) => {
+        console.log(result);
+        console.log(customer)
+        if (result.success) {
+          toast.success(`${customer.name} is updated successfully`);
           setIsModalOpen(false);
         } else {
           toast.error("Something went wrong");

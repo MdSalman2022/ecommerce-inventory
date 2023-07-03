@@ -219,12 +219,12 @@ const Customers = () => {
         selectedCustomer={selectedCustomer}
         refetch={refetch}
       />
-      <div className="flex justify-between py-3 border-b">
+      <div className="flex justify-between border-b py-3">
         <p className="text-xl font-semibold">Customers List</p>
         <div className="flex items-center gap-4">
           <button
             onClick={handleExportClick}
-            className="btn btn-outline btn-primary"
+            className="btn-primary btn-outline btn"
           >
             Export
           </button>
@@ -233,13 +233,13 @@ const Customers = () => {
           {/* The button to open modal */}
           <label
             onClick={() => setIsModalOpen(!isModalOpen)}
-            className="btn btn-outline btn-primary"
+            className="btn-primary btn-outline btn"
           >
             Add Customer
           </label>
           <ModalBox isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen}>
             <div className="bg-base-100">
-              <p className="text-2xl font-semibold p-5 shadow w-full">
+              <p className="w-full p-5 text-2xl font-semibold shadow">
                 Customer Information
               </p>
               <div>
@@ -248,19 +248,19 @@ const Customers = () => {
                   className="flex flex-col gap-3 p-5"
                 >
                   <input
-                    className="input input-bordered "
+                    className="input-bordered input "
                     type="text"
                     name="name"
                     placeholder="Facebook Name"
                   />
                   <input
-                    className="input input-bordered "
+                    className="input-bordered input "
                     type="text"
                     name="phone"
                     placeholder="Phone"
                   />
                   <input
-                    className="input input-bordered "
+                    className="input-bordered input "
                     type="text"
                     name="address"
                     placeholder="Address"
@@ -270,7 +270,7 @@ const Customers = () => {
                     <select
                       name="district"
                       id="district"
-                      className="input input-bordered"
+                      className="input-bordered input"
                     >
                       <option value="" disabled>
                         Select Location
@@ -287,17 +287,17 @@ const Customers = () => {
                     <input
                       type="file"
                       name="image"
-                      className="file-input file-input-bordered file-input-primary w-full max-w-xs"
+                      className="file-input-bordered file-input-primary file-input w-full max-w-xs"
                     />
                   </div>
                   <input
-                    className="input input-bordered "
+                    className="input-bordered input "
                     type="text"
                     name="link"
                     placeholder="Facebook inbox link"
                   />
                   <div>
-                    <div className="flex justify-between gap-3 w-full">
+                    <div className="flex w-full justify-between gap-3">
                       <label
                         type="button"
                         onClick={() => setIsModalOpen(false)}
@@ -307,7 +307,7 @@ const Customers = () => {
                       </label>
                       <button
                         type="submit"
-                        className="btn btn-success btn-outline"
+                        className="btn-success btn-outline btn"
                       >
                         Save
                       </button>
@@ -322,7 +322,7 @@ const Customers = () => {
       <div className="flex justify-between">
         <div className="flex items-center gap-2">
           <p>Show</p>
-          <select name="page" id="page" className="p-2 input input-bordered">
+          <select name="page" id="page" className="input-bordered input p-2">
             <option value="10">10</option>
             <option value="25">25</option>
             <option value="50">50</option>
@@ -336,7 +336,7 @@ const Customers = () => {
             <input
               name="search-key"
               type="text"
-              className="input input-bordered"
+              className="input-bordered input"
             />
           </form>
         </div>
@@ -360,7 +360,7 @@ const Customers = () => {
                       <td className="flex flex-col gap-1">
                         <div className="flex items-center space-x-3">
                           <div className="avatar">
-                            <div className="mask mask-squircle w-12 h-12">
+                            <div className="mask mask-squircle h-12 w-12">
                               <img
                                 src={
                                   customer.customer_details.image || avatarIcon
@@ -383,7 +383,7 @@ const Customers = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="p-1 border border-gray-500 rounded-full text-2xl text-success">
+                          <span className="rounded-full border border-gray-500 p-1 text-2xl text-success">
                             <AiOutlineShoppingCart />
                           </span>
                           <span
@@ -391,7 +391,7 @@ const Customers = () => {
                               setIsEditModalOpen(true);
                               setSelectedCustomer(customer);
                             }}
-                            className="p-1 border border-gray-500 rounded-full text-2xl text-info"
+                            className="rounded-full border border-gray-500 p-1 text-2xl text-info"
                           >
                             <AiOutlineEdit />
                           </span>
@@ -400,7 +400,7 @@ const Customers = () => {
                               setIsDeleteModalOpen(true);
                               setSelectedCustomer(customer);
                             }}
-                            className="p-1 border border-gray-500 rounded-full text-2xl text-error"
+                            className="rounded-full border border-gray-500 p-1 text-2xl text-error"
                           >
                             <RiDeleteBin6Line />
                           </span>
@@ -444,7 +444,7 @@ const Customers = () => {
                       <td className="flex flex-col gap-1">
                         <div className="flex items-center space-x-3">
                           <div className="avatar">
-                            <div className="mask mask-squircle w-12 h-12">
+                            <div className="mask mask-squircle h-12 w-12">
                               <img
                                 src={
                                   customer.customer_details.image || avatarIcon
@@ -467,7 +467,7 @@ const Customers = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="p-1 border border-gray-500 rounded-full text-2xl text-success">
+                          <span className="rounded-full border border-gray-500 p-1 text-2xl text-success">
                             <AiOutlineShoppingCart />
                           </span>
                           <span
@@ -475,7 +475,7 @@ const Customers = () => {
                               setIsEditModalOpen(true);
                               setSelectedCustomer(customer);
                             }}
-                            className="p-1 border border-gray-500 rounded-full text-2xl text-info"
+                            className="rounded-full border border-gray-500 p-1 text-2xl text-info"
                           >
                             <AiOutlineEdit />
                           </span>
@@ -484,7 +484,7 @@ const Customers = () => {
                               setIsDeleteModalOpen(true);
                               setSelectedCustomer(customer);
                             }}
-                            className="p-1 border border-gray-500 rounded-full text-2xl text-error"
+                            className="rounded-full border border-gray-500 p-1 text-2xl text-error"
                           >
                             <RiDeleteBin6Line />
                           </span>
@@ -531,7 +531,7 @@ const Customers = () => {
                 <th className="flex justify-end">
                   <div className="join">
                     <button className="join-item btn">Previous</button>
-                    <button className="join-item btn btn-primary">1</button>
+                    <button className="btn-primary join-item btn">1</button>
                     <button className="join-item btn ">Next</button>
                   </div>
                 </th>

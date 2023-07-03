@@ -112,6 +112,9 @@ const CompletedOrders = () => {
 
   return (
     <div className="space-y-4">
+      <ModalBox isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen}>
+        <InvoiceGenerator order={selectedOrder} />
+      </ModalBox>
       <div className="flex items-start justify-between border-b py-3">
         <div>
           <p className="text-xl font-semibold">Completed Orders</p>
@@ -179,15 +182,12 @@ const CompletedOrders = () => {
                   <td>
                     {" "}
                     <span
-                      onClick={() => setIsModalOpen(!isModalOpen)}
+                      onClick={() => {
+                        setIsModalOpen(!isModalOpen);
+                        setSelectedOrder(order);
+                      }}
                       className="p-1 text-2xl text-success"
                     >
-                      <ModalBox
-                        isModalOpen={isModalOpen}
-                        setIsModalOpen={setIsEditModalOpen}
-                      >
-                        <InvoiceGenerator item={order} />
-                      </ModalBox>
                       <TbFileInvoice />
                     </span>
                   </td>
@@ -211,15 +211,12 @@ const CompletedOrders = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <span
-                        onClick={() => setIsModalOpen(!isModalOpen)}
+                        onClick={() => {
+                          setIsModalOpen(!isModalOpen);
+                          setSelectedOrder(order);
+                        }}
                         className="p-1 text-2xl text-success"
                       >
-                        <ModalBox
-                          isModalOpen={isModalOpen}
-                          setIsModalOpen={setIsModalOpen}
-                        >
-                          <InvoiceGenerator order={order} />
-                        </ModalBox>
                         <TbFileInvoice />
                       </span>
                       <span

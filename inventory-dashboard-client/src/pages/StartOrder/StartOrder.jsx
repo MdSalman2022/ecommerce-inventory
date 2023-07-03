@@ -168,8 +168,8 @@ const StartOrder = () => {
                 </td>
                 <td>
                   <div>Total: {customer.purchase.total}</div>
-                  {customer.purchase.last_purchase ? (
-                    <div>Last purchase: {customer.purchase.last_purchase}</div>
+                  {customer?.purchase?.last_purchase ? (
+                    <div>Last purchase: {customer?.purchase?.last_purchase.name}</div>
                   ) : (
                     <></>
                   )}

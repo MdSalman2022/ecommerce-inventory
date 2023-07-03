@@ -8,9 +8,9 @@ import { PiCrownSimpleBold } from "react-icons/pi";
 import { GiReturnArrow } from "react-icons/gi";
 import { RiDeleteBin5Line } from "react-icons/ri";
 import { CgDatabase } from "react-icons/cg";
-import { GrTransaction } from "react-icons/gr";
 import { BiLogOut } from "react-icons/bi";
 import { NavLink } from "react-router-dom";
+import { FaExchangeAlt } from "react-icons/fa";
 
 const SideBar = ({ children }) => {
   const pages = [
@@ -71,7 +71,7 @@ const SideBar = ({ children }) => {
     },
     {
       name: "transactions",
-      icon: <GrTransaction />,
+      icon: <FaExchangeAlt />,
       route: "/transactions",
     },
     {
@@ -87,7 +87,7 @@ const SideBar = ({ children }) => {
     <div>
       <div className="grid grid-cols-7 text-black">
         <div className="col-span-1 h-full bg-white">
-          <div className="flex flex-col gap-5 w-full bg-white px-5 py-4 h-[93vh]">
+          <div className="flex h-[93vh] w-full flex-col gap-5 bg-white px-5 py-4">
             {pages.map((page, index) => (
               <NavLink
                 key={index}
@@ -96,7 +96,7 @@ const SideBar = ({ children }) => {
                   isActive ? activeClassName : "text-gray-600"
                 }
               >
-                <p className="p-2 capitalize hover:bg-primary  hover:text-white rounded-lg cursor-pointer flex items-center justify-start gap-4 text-sm">
+                <p className="flex cursor-pointer items-center  justify-start gap-4 rounded-lg p-2 text-sm capitalize hover:bg-primary hover:text-white">
                   {page.icon}
                   {page.name}
                 </p>

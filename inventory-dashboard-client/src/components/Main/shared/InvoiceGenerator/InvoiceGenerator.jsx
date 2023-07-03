@@ -3,6 +3,7 @@ import ReactToPrint from "react-to-print";
 import Barcode from "react-barcode";
 
 const InvoiceGenerator = ({ order }) => {
+  console.log(order);
   const componentRef = useRef();
 
   function formatStockDate(isoTimestamp) {
