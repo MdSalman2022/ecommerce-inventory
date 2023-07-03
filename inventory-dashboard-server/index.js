@@ -359,6 +359,7 @@ async function run() {
             completed: 0,
             returned: 0,
           },
+          timestamp: new Date().toISOString(),
         };
 
         const result = await customersCollection.insertOne(customer);
@@ -574,7 +575,20 @@ async function run() {
     app.put("/api/put-edit-customer/:id", async (req, res) => {
       try {
         const customerId = req.params.id;
-        const { image, name, phone, location, address, link } = req.body;
+        const {
+          image,
+          name,
+          phone,
+          location,
+          address,
+          link,
+          total,
+          order,
+          processingCount,
+          readyCount,
+          completedCount,
+          returnedCount,
+        } = req.body;
 
         const result = await customersCollection.updateOne(
           { _id: new ObjectId(customerId) },
@@ -586,6 +600,12 @@ async function run() {
               "customer_details.location": location,
               "customer_details.address": address,
               "customer_details.link": link,
+              "purchase.total": total,
+              "purchase.last_purchase": order,
+              "orders.processing": processingCount,
+              "orders.ready": readyCount,
+              "orders.completed": completedCount,
+              "orders.returned": returnedCount,
             },
           }
         );
