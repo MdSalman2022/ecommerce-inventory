@@ -40,11 +40,11 @@ const StartOrderModal = ({
     const address = form.address.value;
     const district = form.district.value;
     const courier = form.courier.value;
-    const deliveryCharge = form.deliveryCharge.value;
-    const discount = form.discount.value;
-    const total = form.totalBill.value;
-    const advance = form.advance.value;
-    const cash = form.cashCollect.value;
+    const deliveryCharge = parseInt(form.deliveryCharge.value);
+    const discount = parseInt(form.discount.value);
+    const total = parseInt(form.totalBill.value);
+    const advance = parseInt(form.advance.value);
+    const cash = parseInt(form.cashCollect.value);
     const instruction = form.instruction.value;
     const image = form.image.files[0];
 
@@ -73,8 +73,61 @@ const StartOrderModal = ({
           .then((result) => {
             console.log(result);
             if (result.success) {
+              console.log(result?.result?.insertedId);
               setNewCustomerId(result?.result?.insertedId);
               toast.success(`${customerInfo.name} is added successfully`);
+              fetch(url, {
+                method: "POST",
+                body: formData,
+              })
+                .then((res) => res.json())
+                .then((imgUpload) => {
+                  if (imgUpload.success) {
+                    console.log("new customer id", result?.result?.insertedId);
+
+                    const order = {
+                      image: imgUpload.data.url,
+                      customerId: result?.result?.insertedId,
+                      name,
+                      phone,
+                      address,
+                      district,
+                      products: productList,
+                      quantity: productList.length,
+                      courier,
+                      deliveryCharge,
+                      discount,
+                      total,
+                      advance,
+                      cash,
+                      instruction,
+                      timestamp: new Date().toISOString(),
+                    };
+                    const customerInfo = {
+                      id: result?.result?.insertedId,
+                      image: "",
+                      name,
+                      phone,
+                      address,
+                      location: district,
+                      total:
+                        0 + total + deliveryCharge - total * (discount / 100),
+                      order,
+                      processingCount: 1,
+                      readyCount: 0,
+                      completedCount: 0,
+                      returnedCount: 0,
+                    };
+
+                    console.log(order);
+                    addOrder(order);
+                    updateCustomer(customerInfo);
+                  }
+                })
+                .catch((err) => {
+                  console.log(err);
+                  toast.error("Something went wrong");
+                });
               setIsModalOpen(false);
             } else {
               toast.error("Something went wrong");
@@ -84,92 +137,176 @@ const StartOrderModal = ({
             console.log(err);
             toast.error("Something went wrong");
           });
-      }
-      fetch(url, {
-        method: "POST",
-        body: formData,
-      })
-        .then((res) => res.json())
-        .then((imgUpload) => {
-          if (imgUpload.success) {
-            const order = {
-              image: imgUpload.data.url,
-              customerId: selectedCustomer?._id || newCustomerId,
-              name,
-              phone,
-              address,
-              district,
-              products: productList,
-              quantity: productList.length,
-              courier,
-              deliveryCharge,
-              discount,
-              total,
-              advance,
-              cash,
-              instruction,
-              timestamp: new Date().toISOString(),
-            };
-            const customerInfo = {
-              id: selectedCustomer?._id || newCustomerId,
-              image: selectedCustomer?.image || "",
-              name,
-              phone,
-              address,
-              location: district,
-              total:parseInt(selectedCustomer?.purchase?.total) || 0 + total + deliveryCharge -(total * (discount / 100)),
-              order,
-              processingCount: selectedCustomer?.orders?.processing + 1,
-              readyCount: selectedCustomer?.orders?.ready,
-              completedCount: selectedCustomer?.orders?.completed,
-              returnedCount: selectedCustomer?.orders?.returnedCount,
-            };
-
-            console.log(order);
-            addOrder(order);
-            updateCustomer(customerInfo);
-          }
+      } else {
+        // if customer is already exist and image is uploaded
+        fetch(url, {
+          method: "POST",
+          body: formData,
         })
-        .catch((err) => {
-          console.log(err);
-          toast.error("Something went wrong");
-        });
-    } else {
-      const order = {
-        image: "",
-        customerId: selectedCustomer?._id || newCustomerId,
-        name,
-        phone,
-        address,
-        district,
-        products: productList,
-        quantity: productList.length,
-        courier,
-        deliveryCharge,
-        discount,
-        total,
-        advance,
-        cash,
-        instruction,
-        timestamp: new Date().toISOString(),
-      };
-      const customerInfo = {
-        id: selectedCustomer?._id || newCustomerId,
-        image: selectedCustomer?.image || "",
-        name,
-        phone,
-        address,
-        location: district,
-        total:parseInt(selectedCustomer?.purchase?.total) || 0 + total + deliveryCharge -(total * (discount / 100)),
-        order,
-        processingCount: selectedCustomer?.orders?.processing + 1,
-        readyCount: selectedCustomer?.orders?.ready,
-        completedCount: selectedCustomer?.orders?.completed,
-        returnedCount: selectedCustomer?.orders?.returnedCount,
-      };
+          .then((res) => res.json())
+          .then((imgUpload) => {
+            if (imgUpload.success) {
+              const order = {
+                image: imgUpload.data.url,
+                customerId: selectedCustomer?._id,
+                name,
+                phone,
+                address,
+                district,
+                products: productList,
+                quantity: productList.length,
+                courier,
+                deliveryCharge,
+                discount,
+                total,
+                advance,
+                cash,
+                instruction,
+                timestamp: new Date().toISOString(),
+              };
+              const customerInfo = {
+                id: selectedCustomer?._id,
+                image: selectedCustomer?.image || "",
+                name,
+                phone,
+                address,
+                location: district,
+                total:
+                  parseInt(selectedCustomer?.purchase?.total) +
+                  total +
+                  deliveryCharge -
+                  total * (discount / 100),
+                order,
+                processingCount: selectedCustomer?.orders?.processing + 1,
+                readyCount: selectedCustomer?.orders?.ready,
+                completedCount: selectedCustomer?.orders?.completed,
+                returnedCount: selectedCustomer?.orders?.returned,
+              };
 
-      addOrder(order);
-      updateCustomer(customerInfo);
+              console.log(order);
+              addOrder(order);
+              updateCustomer(customerInfo);
+            }
+          })
+          .catch((err) => {
+            console.log(err);
+            toast.error("Something went wrong");
+          });
+        setIsModalOpen(false);
+      }
+    } else {
+      // if image is not uploaded
+
+      if (!selectedCustomer?._id) {
+        const customerInfo = {
+          name,
+          phone,
+          address,
+          location: district,
+        };
+
+        fetch(`${import.meta.env.VITE_SERVER_URL}/api/add-customer`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify(customerInfo),
+        })
+          .then((res) => res.json())
+          .then((result) => {
+            console.log(result);
+            if (result.success) {
+              console.log(result?.result?.insertedId);
+              const order = {
+                image: "",
+                customerId: result?.result?.insertedId,
+                name,
+                phone,
+                address,
+                district,
+                products: productList,
+                quantity: productList.length,
+                courier,
+                deliveryCharge,
+                discount,
+                total,
+                advance,
+                cash,
+                instruction,
+                timestamp: new Date().toISOString(),
+              };
+              const customerInfo = {
+                id: newCustomerId,
+                image: "",
+                name,
+                phone,
+                address,
+                location: district,
+                total: 0 + total + deliveryCharge - total * (discount / 100),
+                order,
+                processingCount: 1,
+                readyCount: 0,
+                completedCount: 0,
+                returnedCount: 0,
+              };
+
+              console.log(
+                "order for if image is not uploaded but selected customer false",
+                order,
+                customerInfo
+              );
+
+              addOrder(order);
+              updateCustomer(customerInfo);
+            }
+          });
+      } else {
+        const order = {
+          image: "",
+          customerId: selectedCustomer?._id,
+          name,
+          phone,
+          address,
+          district,
+          products: productList,
+          quantity: productList.length,
+          courier,
+          deliveryCharge,
+          discount,
+          total,
+          advance,
+          cash,
+          instruction,
+          timestamp: new Date().toISOString(),
+        };
+        const customerInfo = {
+          id: selectedCustomer?._id,
+          image: selectedCustomer?.image || "",
+          name,
+          phone,
+          address,
+          location: district,
+          total:
+            parseInt(selectedCustomer?.purchase?.total) +
+            total +
+            deliveryCharge -
+            total * (discount / 100),
+          order,
+          processingCount: selectedCustomer?.orders?.processing + 1,
+          readyCount: selectedCustomer?.orders?.ready,
+          completedCount: selectedCustomer?.orders?.completed,
+          returnedCount: selectedCustomer?.orders?.returned,
+        };
+
+        console.log(
+          "order for if image is not uploaded but selected customer true",
+          order,
+          customerInfo
+        );
+
+        addOrder(order);
+        updateCustomer(customerInfo);
+      }
     }
   };
 
@@ -238,7 +375,7 @@ const StartOrderModal = ({
       .then((res) => res.json())
       .then((result) => {
         console.log(result);
-        console.log(customer)
+        console.log(customer);
         if (result.success) {
           toast.success(`${customer.name} is updated successfully`);
           setIsModalOpen(false);

@@ -109,6 +109,8 @@ const OrderProcessing = () => {
       });
   };
 
+  console.log(selectedOrder);
+
   return (
     <div className="space-y-4">
       <DeleteOrderModal
@@ -180,14 +182,17 @@ const OrderProcessing = () => {
                   <td>{index + 1}</td>
                   <td>
                     <span
-                      onClick={() => setIsModalOpen(!isModalOpen)}
+                      onClick={() => {
+                        setIsModalOpen(!isModalOpen);
+                        setSelectedOrder(order);
+                      }}
                       className="p-1 text-2xl text-success"
                     >
                       <ModalBox
                         isModalOpen={isModalOpen}
                         setIsModalOpen={setIsModalOpen}
                       >
-                        <InvoiceGenerator order={order} />
+                        <InvoiceGenerator order={selectedOrder} />
                       </ModalBox>
                       <TbFileInvoice />
                     </span>

@@ -1,44 +1,120 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import ModalBox from "../../components/Main/shared/Modals/ModalBox";
+import { AiOutlineEdit } from "react-icons/ai";
+import EditCourierModal from "../../components/Main/Couriers/EditCourierModal";
+import { useQuery } from "react-query";
+import { toast } from "react-hot-toast";
 
 const Couriers = () => {
-  const [tokenInfo, setTokenInfo] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditCourierModalOpen, setIsEditCourierModalOpen] = useState(false);
+  const [selectedCourier, setSelectedCourier] = useState({});
 
-  const handleGetToken = async () => {
+  const fetchCouriers = async () => {
+    const res = await fetch(
+      `${import.meta.env.VITE_SERVER_URL}/api/get-couriers`
+    );
+    const data = await res.json();
+    return data.couriers;
+  };
+
+  const { data: couriers, refetch } = useQuery("couriers", fetchCouriers);
+
+  console.log(couriers);
+
+  const handleCourierSubmit = async (e) => {
+    e.preventDefault();
+
+    const form = e.target;
+    const name = form.name.value;
+    const chargeInDhaka = form.chargeInDhaka.value;
+    const chargeOutsideDhaka = form.chargeOutsideDhaka.value;
+    const status = form.status.checked;
+
+    const courier = {
+      name,
+      chargeInDhaka,
+      chargeOutsideDhaka,
+      status,
+    };
+
+    console.log(courier);
     try {
-      const response = await fetch(
-        "https://courier-api-sandbox.pathao.com/aladdin/api/v1/issue-token",
-        {
-          method: "POST",
-          mode: "no-cors", // no-cors, *cors, same-origin
-          headers: {
-            "Accept": "application/json",
-            "Content-type": "application/json",
-          },
-          body: JSON.stringify({
-            client_id: "267",
-            client_secret: "wRcaibZkUdSNz2EI9ZyuXLlNrnAv0TdPUPXMnD39",
-            username: "test@pathao.com",
-            password: "lovePathao",
-            grant_type: "password",
-          }),
-        }
-      );
+      const res = await fetch("http://localhost:5000/api/post-add-courier", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(courier),
+      });
 
-      const data = await response.json();
-      console.log(data);
-      setTokenInfo(data);
-    } catch (error) {
-      console.log(error);
+      const data = await res.json();
+      if (data.success) {
+        refetch();
+        toast.success("Courier added successfully");
+        setIsModalOpen(false);
+      }
+    } catch (err) {
+      console.log(err);
     }
   };
 
-  console.log(tokenInfo);
-
   return (
     <div className="space-y-5">
+      <EditCourierModal
+        isEditCourierModalOpen={isEditCourierModalOpen}
+        setIsEditCourierModalOpen={setIsEditCourierModalOpen}
+        selectedCourier={selectedCourier}
+        refetch={refetch}
+      ></EditCourierModal>
+      <ModalBox isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen}>
+        <div className="space-y-5 p-5">
+          <p>Courier Information</p>
+          <form onSubmit={handleCourierSubmit} className="flex flex-col gap-3">
+            <input
+              type="text"
+              name="name"
+              className="input-bordered input"
+              placeholder="Name"
+            />
+            <input
+              type="number"
+              name="chargeInDhaka"
+              className="input-bordered input"
+              placeholder="Price in Dhaka"
+            />
+            <input
+              type="number"
+              name="chargeOutsideDhaka"
+              className="input-bordered input"
+              placeholder="Price outside Dhaka"
+            />
+            <div className="form-control w-52">
+              <label className="label cursor-pointer">
+                <span className="label-text">Status</span>
+                <input
+                  type="checkbox"
+                  className="toggle-primary toggle"
+                  name="status"
+                />
+              </label>
+            </div>
+
+            <div className="flex w-full items-center justify-between">
+              <button className="btn-error btn">Cancel</button>
+              <button type="submit" className="btn-primary btn">
+                Save
+              </button>
+            </div>
+          </form>
+        </div>
+      </ModalBox>
       <div className="flex justify-between">
         <p className="text-xl font-bold">Couriers</p>
-        <button onClick={() => handleGetToken()} className="btn-primary btn">
+        <button
+          onClick={() => setIsModalOpen(!isModalOpen)}
+          className="btn-primary btn"
+        >
           Add Courier
         </button>
       </div>
@@ -73,22 +149,40 @@ const Couriers = () => {
             {/* head */}
             <thead>
               <tr>
+                <th className="w-5">Edit</th>
                 <th className="w-5"></th>
                 <th>Name</th>
-                <th>Email</th>
+                <th>Charge in Dhaka</th>
+                <th>Charge Outside Dhaka</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody>
               {/* row 1 */}
-              <tr>
-                <th className="w-5">1</th>
-                <td>Cy Ganderton</td>
-                <td>Quality Control Specialist</td>
-                <td>
-                  <button className="badge badge-success">Active</button>
-                </td>
-              </tr>
+              {couriers?.map((courier, index) => (
+                <tr key={courier._id}>
+                  <td className="w-5">
+                    <AiOutlineEdit
+                      onClick={() => {
+                        setIsEditCourierModalOpen(!isEditCourierModalOpen);
+                        setSelectedCourier(courier);
+                      }}
+                      className="rounded-full border border-black p-1 text-3xl"
+                    />
+                  </td>
+                  <td className="w-5">{index + 1}</td>
+                  <td>{courier.name}</td>
+                  <td>{courier.chargeInDhaka}</td>
+                  <td>{courier.chargeOutsideDhaka}</td>
+                  <td>
+                    {courier.status ? (
+                      <button className="badge badge-success">Active</button>
+                    ) : (
+                      <button className="badge badge-error">Inactive</button>
+                    )}
+                  </td>
+                </tr>
+              ))}
             </tbody>
             <tfoot className="bg-white">
               <tr>
