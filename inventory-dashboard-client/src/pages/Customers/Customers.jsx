@@ -408,9 +408,10 @@ const Customers = () => {
                       </td>
                       <td>
                         <div>Total: {customer.purchase.total}</div>
-                        {customer.purchase.last_purchase ? (
+                        {customer?.purchase?.last_purchase ? (
                           <div>
-                            Last purchase: {customer.purchase.last_purchase}
+                            Last purchase:{" "}
+                            {customer?.purchase?.last_purchase.name}
                           </div>
                         ) : (
                           <></>

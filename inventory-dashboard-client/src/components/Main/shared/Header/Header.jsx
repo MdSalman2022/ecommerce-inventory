@@ -1,13 +1,41 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 const Header = () => {
+  const menus = [
+    {
+      name: "Settings",
+      path: "/profile",
+    },
+    {
+      name: "Users",
+      path: "/users",
+    },
+    {
+      name: "Couriers",
+      path: "/couriers",
+    },
+    {
+      name: "Stores",
+      path: "/stores",
+    },
+    {
+      name: "Products",
+      path: "/products",
+    },
+    {
+      name: "Suppliers",
+      path: "/suppliers",
+    },
+  ];
+
   return (
-    <div className="z-10 relative">
-      <div className="navbar bg-base-100 shadow-lg px-5">
+    <div className="relative z-10">
+      <div className="navbar bg-base-100 px-5 shadow-lg">
         <div className="flex-1">
-          <a className="btn btn-ghost normal-case text-xl">
+          <a className="btn-ghost btn text-xl normal-case">
             <img
-              className="w-full h-10 object-cover"
+              className="h-10 w-full object-cover"
               src="https://i.ibb.co/TW8T2kc/logo-momley.png"
               alt=""
             />
@@ -18,31 +46,26 @@ const Header = () => {
             <input
               type="text"
               placeholder="Search"
-              className="input input-bordered w-60 md:w-96 rounded-full"
+              className="input-bordered input w-60 rounded-full md:w-96"
             />
           </div>
-          <div className="dropdown dropdown-end">
-            <label tabIndex={0} className="btn btn-ghost btn-circle avatar">
+          <div className="dropdown-end dropdown">
+            <label tabIndex={0} className="btn-ghost btn-circle avatar btn">
               <div className="w-10 rounded-full">
                 <img src="https://i.ibb.co/LpsnbCC/Rectangle-182.png" />
               </div>
             </label>
             <ul
               tabIndex={0}
-              className="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52"
+              className="dropdown-content menu  rounded-box z-[1] mt-3 w-52 gap-1 bg-base-100 p-2 shadow"
             >
-              <li>
-                <a className="justify-between">
-                  Profile
-                  <span className="badge">New</span>
-                </a>
-              </li>
-              <li>
-                <a>Settings</a>
-              </li>
-              <li>
-                <a>Logout</a>
-              </li>
+              {menus?.map((menu, index) => (
+                <li key={index}>
+                  <Link to={menu.path} className="hover:bg-base-200">
+                    {menu.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
         </div>

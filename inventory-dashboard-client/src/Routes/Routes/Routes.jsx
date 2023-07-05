@@ -12,6 +12,9 @@ import ReturnedOrders from "../../pages/ReturnedOrders/ReturnedOrders";
 import CancelledOrders from "../../pages/CancelledOrders/CancelledOrders";
 import LossProfitPage from "../../pages/LossProfitPage/LossProfitPage";
 import Transaction from "../../pages/Transaction/Transaction";
+import Settings from "../../pages/Settings/Settings";
+import Users from "../../pages/Users/Users";
+import Couriers from "../../pages/Couriers/Couriers";
 
 export const router = createBrowserRouter([
   {
@@ -66,6 +69,18 @@ export const router = createBrowserRouter([
       {
         path: "/transactions",
         element: <Transaction />,
+      },
+      {
+        path: "/profile",
+        element: <Settings />,
+      },
+      {
+        path: "/users",
+        element: <Users />,
+      },
+      {
+        path: "/couriers",
+        element: <Couriers />,
       },
     ],
   },
